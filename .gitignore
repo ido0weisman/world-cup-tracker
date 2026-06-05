@@ -3,3 +3,6 @@ node_modules/
 *.sqlite
 dist/
 .DS_Store
+
+# Private planning doc — kept local only
+MASTER_PLAN.md
