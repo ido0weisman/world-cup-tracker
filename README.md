@@ -44,9 +44,9 @@ React **never calls the external API directly**. A Node.js cron job fetches fres
 | 0 | Environment setup & project scaffold | ✅ Done |
 | 1 | Database schema & migrations | ✅ Done |
 | 2 | Core backend infrastructure (caching engine) | ✅ Done |
-| 3 | Auth routes (register, login, JWT guard) | ⏳ Next |
-| 4 | Match & tournament routes | ⏳ Pending |
-| 5 | Betting routes & lock logic | ⏳ Pending |
+| 3 | Auth routes (register, login, JWT guard) | ✅ Done |
+| 4 | Match & tournament routes | ✅ Done |
+| 5 | Betting routes & lock logic | ⏳ Next |
 | 6 | Scoring engine & leaderboard | ⏳ Pending |
 | 7 | React shell (layout, routing, auth context) | ✅ Done |
 | 8 | Feature pages (all 5 pages + betting hub) | ⏳ Pending |

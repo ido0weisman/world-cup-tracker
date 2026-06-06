@@ -5,6 +5,10 @@ const cors = require('cors');
 const runMigrations = require('./db/migrate');
 const { initCacheService } = require('./services/apiCache.service');
 const errorHandler = require('./middleware/error.middleware');
+const authRoutes     = require('./modules/auth/auth.routes');
+const matchesRoutes  = require('./modules/matches/matches.routes');
+const groupsRoutes   = require('./modules/groups/groups.routes');
+const knockoutRoutes = require('./modules/knockout/knockout.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,11 +18,16 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({ origin: 'http://localhost:5173' })); // Vite's default dev port
 app.use(express.json());
 
-// ─── Routes (added phase by phase) ───────────────────────────────────────────
-// Placeholder — routes will be mounted here as we build each module.
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.use('/api/auth',     authRoutes);
+app.use('/api/matches',  matchesRoutes);
+app.use('/api/groups',   groupsRoutes);
+app.use('/api/knockout', knockoutRoutes);
 
 // ─── Error Handler (must be last) ────────────────────────────────────────────
 app.use(errorHandler);
