@@ -11,6 +11,7 @@ const groupsRoutes   = require('./modules/groups/groups.routes');
 const knockoutRoutes = require('./modules/knockout/knockout.routes');
 const betsRoutes     = require('./modules/bets/bets.routes');
 const adminRoutes    = require('./modules/bets/admin.routes');
+const squadsRoutes   = require('./modules/squads/squads.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +33,7 @@ app.use('/api/groups',   groupsRoutes);
 app.use('/api/knockout', knockoutRoutes);
 app.use('/api/bets',    betsRoutes);
 app.use('/api/admin',   adminRoutes);
+app.use('/api/squads',  squadsRoutes);
 
 // ─── Error Handler (must be last) ────────────────────────────────────────────
 app.use(errorHandler);

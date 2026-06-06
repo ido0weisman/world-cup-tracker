@@ -37,7 +37,7 @@ function Header() {
       <div className="header__auth">
         {user ? (
           <>
-            <span className="header__username">👤 {user.full_name.split(' ')[0]}</span>
+            <NavLink to="/profile" className="header__username">👤 {user.full_name.split(' ')[0]}</NavLink>
             <button onClick={logout} className="btn btn--outline">Log out</button>
           </>
         ) : (
@@ -68,9 +68,14 @@ function Header() {
           ))}
           <div className="mobile-menu__divider" />
           {user ? (
-            <button onClick={() => { logout(); closeMenu(); }} className="btn btn--outline mobile-menu__btn">
-              Log out
-            </button>
+            <>
+              <NavLink to="/profile" onClick={closeMenu} className="mobile-menu__link">
+                👤 {user.full_name.split(' ')[0]}
+              </NavLink>
+              <button onClick={() => { logout(); closeMenu(); }} className="btn btn--outline mobile-menu__btn">
+                Log out
+              </button>
+            </>
           ) : (
             <>
               <NavLink to="/login"    onClick={closeMenu} className="btn btn--outline mobile-menu__btn">Log in</NavLink>

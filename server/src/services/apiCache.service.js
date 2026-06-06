@@ -35,6 +35,20 @@ async function fetchAndCacheMatches() {
   }
 }
 
+async function fetchAndCacheTeamSquads() {
+  try {
+    const { data } = await apiClient.get(`/competitions/${WC_COMPETITION_ID}/teams`);
+    db.prepare(`
+      INSERT INTO api_cache (cache_key, payload, fetched_at)
+      VALUES ('team_squads', ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(cache_key) DO UPDATE SET payload = excluded.payload, fetched_at = CURRENT_TIMESTAMP
+    `).run(JSON.stringify(data));
+    console.log('[Cache] Team squads updated');
+  } catch (err) {
+    console.error('[Cache] Failed to fetch team squads:', err.message);
+  }
+}
+
 async function fetchAndCacheStandings() {
   try {
     const { data } = await apiClient.get(`/competitions/${WC_COMPETITION_ID}/standings`);
@@ -188,7 +202,7 @@ function normalizeStage(apiStage) {
 
 async function initCacheService() {
   console.log('[Cache] Running initial data fetch...');
-  await Promise.all([fetchAndCacheMatches(), fetchAndCacheStandings()]);
+  await Promise.all([fetchAndCacheMatches(), fetchAndCacheStandings(), fetchAndCacheTeamSquads()]);
 
   // Refresh every 20 minutes regardless of how many users are active
   cron.schedule('*/20 * * * *', async () => {

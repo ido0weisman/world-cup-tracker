@@ -187,3 +187,73 @@
   font-size: 1rem;
   align-self: flex-start;
 }
+
+/* ── No squad message ───────────────────────────────────────────────────────── */
+.ts-no-squad {
+  color: rgba(255,255,255,0.4);
+  font-size: 0.9rem;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+/* ── Position group ─────────────────────────────────────────────────────────── */
+.ts-position-group {
+  margin-bottom: 1.25rem;
+}
+
+.ts-position-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-gold);
+  margin-bottom: 0.5rem;
+}
+
+/* ── Player grid ────────────────────────────────────────────────────────────── */
+.ts-player-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ts-player-card {
+  padding: 0.45rem 0.85rem;
+  background: rgba(13,27,42,0.75);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.ts-player-card:hover {
+  border-color: var(--color-gold);
+  background: rgba(245,197,24,0.08);
+}
+
+.ts-player-card--selected {
+  border-color: var(--color-gold);
+  background: rgba(245,197,24,0.18);
+  color: var(--color-gold);
+  font-weight: 700;
+}
+
+/* ── Confirm row ────────────────────────────────────────────────────────────── */
+.ts-confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.ts-confirm-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-gold);
+}

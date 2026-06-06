@@ -45,6 +45,12 @@ const RULES = [
     detail: 'Following the success of extended stoppage time at the 2022 World Cup, referees are instructed to accurately account for goal celebrations, VAR checks, injuries, and substitutions. Expect 8–12 minutes of added time in many matches.',
   },
   {
+    icon: '🚫',
+    title: 'No More Time Wasting',
+    summary: '5-second throw-ins & 10-second substitution exits',
+    detail: 'Two strict anti-time-wasting rules are in force at WC 2026. First, throw-ins and goal-kicks now have a 5-second countdown — if the ball is not in play in time, possession switches to the opposition (or the opponent earns a corner if a goal-kick is delayed). Second, substituted players must leave the field within 10 seconds of the 4th official raising the board. If they refuse, their team plays a man down until the next stoppage after one minute, at which point the replacement is finally allowed on.',
+  },
+  {
     icon: '🌐',
     title: 'Expanded Global Representation',
     summary: 'Africa gets 9 spots, Asia gets 8',

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFetch } from '../../hooks/useFetch';
 import { getAllGroups } from '../../api/groups.api';
 import { getTopScorerBet, submitTopScorerBet } from '../../api/bets.api';
+import { getTeamSquad } from '../../api/squads.api';
 import Spinner from '../../components/ui/Spinner';
 import { useToast } from '../../context/ToastContext';
 import './Betting.css';
@@ -10,6 +11,27 @@ import './TopScorer.css';
 
 const LOCK_DATE = new Date('2026-06-15T23:59:59Z');
 const isLocked  = () => new Date() > LOCK_DATE;
+
+// Position display labels + order
+const POSITION_LABELS = {
+  Goalkeeper: '🧤 Goalkeepers',
+  Defence:    '🛡️ Defenders',
+  Midfield:   '⚙️ Midfielders',
+  Offence:    '⚡ Forwards',
+};
+const POSITION_ORDER = ['Goalkeeper', 'Defence', 'Midfield', 'Offence'];
+
+function groupByPosition(players) {
+  const groups = {};
+  for (const p of players) {
+    const pos = p.position ?? 'Unknown';
+    if (!groups[pos]) groups[pos] = [];
+    groups[pos].push(p);
+  }
+  return POSITION_ORDER
+    .filter(pos => groups[pos]?.length)
+    .map(pos => ({ position: pos, players: groups[pos] }));
+}
 
 function TopScorer() {
   const navigate = useNavigate();
@@ -19,16 +41,31 @@ function TopScorer() {
   const { data: groupsData, loading: groupsLoading } = useFetch(getAllGroups);
   const { data: betData,    loading: betLoading }     = useFetch(getTopScorerBet);
 
-  const allTeams = groupsData?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [];
+  const allTeams = (groupsData?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [])
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Step 1: pick team | Step 2: enter player name
-  const [step,       setStep]       = useState(1);
-  const [pickedTeam, setPickedTeam] = useState(null);
-  const [playerName, setPlayerName] = useState('');
-  const [saving,     setSaving]     = useState(false);
-  const [search,     setSearch]     = useState('');
+  // Step 1: pick team | Step 2: pick player from list
+  const [step,           setStep]           = useState(1);
+  const [pickedTeam,     setPickedTeam]     = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [players,        setPlayers]        = useState([]);
+  const [playersLoading, setPlayersLoading] = useState(false);
+  const [saving,         setSaving]         = useState(false);
+  const [search,         setSearch]         = useState('');
 
   const existing = betData?.bet;
+
+  // Fetch squad when a team is picked
+  useEffect(() => {
+    if (!pickedTeam) return;
+    setPlayers([]);
+    setSelectedPlayer(null);
+    setPlayersLoading(true);
+    getTeamSquad(pickedTeam.short_code)
+      .then(data => setPlayers(data.players ?? []))
+      .catch(() => setPlayers([]))
+      .finally(() => setPlayersLoading(false));
+  }, [pickedTeam]);
 
   const filteredTeams = search.trim()
     ? allTeams.filter(t => t.name.toLowerCase().includes(search.toLowerCase()))
@@ -39,16 +76,15 @@ function TopScorer() {
     setStep(2);
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!playerName.trim()) { addToast('Enter a player name.', 'error'); return; }
+  async function handleSubmit() {
+    if (!selectedPlayer) { addToast('Select a player first.', 'error'); return; }
     setSaving(true);
     try {
-      await submitTopScorerBet({ team_id: pickedTeam.id, player_name: playerName.trim() });
-      addToast(`Top scorer pick saved — ${playerName} (${pickedTeam.name})`, 'success');
+      await submitTopScorerBet({ team_id: pickedTeam.id, player_name: selectedPlayer.name });
+      addToast(`Top scorer pick saved — ${selectedPlayer.name} (${pickedTeam.name})`, 'success');
       setStep(1);
       setPickedTeam(null);
-      setPlayerName('');
+      setSelectedPlayer(null);
     } catch (err) {
       addToast(err.response?.data?.error || 'Failed to save.', 'error');
     } finally {
@@ -57,6 +93,8 @@ function TopScorer() {
   }
 
   if (groupsLoading || betLoading) return <Spinner />;
+
+  const grouped = groupByPosition(players);
 
   return (
     <div>
@@ -120,10 +158,12 @@ function TopScorer() {
             </div>
           )}
 
-          {/* ── Step 2: Player Name ── */}
+          {/* ── Step 2: Player List ── */}
           {step === 2 && pickedTeam && (
             <div className="ts-step2">
-              <button className="betting-back" onClick={() => setStep(1)}>← Back to countries</button>
+              <button className="betting-back" onClick={() => { setStep(1); setPickedTeam(null); }}>
+                ← Back to countries
+              </button>
 
               <div className="ts-selected-team">
                 {pickedTeam.flag_url && (
@@ -132,22 +172,43 @@ function TopScorer() {
                 <span className="ts-selected-team__name">{pickedTeam.name}</span>
               </div>
 
-              <p className="ts-step-label">Step 2 — Enter the player's name</p>
+              <p className="ts-step-label">Step 2 — Choose a player</p>
 
-              <form onSubmit={handleSubmit} className="ts-player-form">
-                <input
-                  type="text"
-                  className="ts-player-input"
-                  placeholder="e.g. Kylian Mbappé"
-                  value={playerName}
-                  onChange={e => setPlayerName(e.target.value)}
-                  autoFocus
-                  required
-                />
-                <button type="submit" className="btn btn--primary ts-submit-btn" disabled={saving}>
-                  {saving ? 'Saving…' : '✓ Confirm Pick'}
-                </button>
-              </form>
+              {playersLoading && <Spinner message="Loading squad…" />}
+
+              {!playersLoading && players.length === 0 && (
+                <p className="ts-no-squad">No squad data available for this team yet.</p>
+              )}
+
+              {!playersLoading && grouped.map(({ position, players: posPlayers }) => (
+                <div key={position} className="ts-position-group">
+                  <p className="ts-position-label">{POSITION_LABELS[position] ?? position}</p>
+                  <div className="ts-player-grid">
+                    {posPlayers.map(player => (
+                      <button
+                        key={player.id}
+                        className={`ts-player-card ${selectedPlayer?.id === player.id ? 'ts-player-card--selected' : ''}`}
+                        onClick={() => setSelectedPlayer(player)}
+                      >
+                        {player.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {selectedPlayer && (
+                <div className="ts-confirm-row">
+                  <span className="ts-confirm-name">✓ {selectedPlayer.name}</span>
+                  <button
+                    className="btn btn--primary ts-submit-btn"
+                    onClick={handleSubmit}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving…' : 'Confirm Pick'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </>

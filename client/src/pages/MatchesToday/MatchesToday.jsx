@@ -2,16 +2,21 @@ import { useFetch } from '../../hooks/useFetch';
 import { getMatchesToday } from '../../api/matches.api';
 import MatchCard from '../../components/ui/MatchCard';
 import { MatchCardSkeleton } from '../../components/ui/Skeleton';
+import { useAuth } from '../../context/AuthContext';
+import { getTimezoneForCountry } from '../../utils/timezone';
 import './MatchesToday.css';
 
 function MatchesToday() {
   const { data, loading, error } = useFetch(getMatchesToday);
+  const { user } = useAuth();
+  const timezone = getTimezoneForCountry(user?.country);
+  const tzOpts = timezone ? { timeZone: timezone } : {};
 
   return (
     <div className="matches-page">
       <h1 className="matches-page__title">Today's Matches</h1>
       <p className="matches-page__sub">
-        {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', ...tzOpts })}
       </p>
 
       {error && <p className="matches-page__error">{error}</p>}

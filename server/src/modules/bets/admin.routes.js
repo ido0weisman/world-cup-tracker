@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const { setTopScorerResult, getTopScorerResult } = require('../../services/scoring.service');
+const db = require('../../config/db');
 
 const router = Router();
 
@@ -31,6 +32,19 @@ router.post('/top-scorer', adminGuard, (req, res, next) => {
     }
     setTopScorerResult(player_name, team_id);
     res.json({ message: 'Top scorer result saved. Leaderboard will update immediately.' });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/admin/users — wipe all users and their predictions
+router.delete('/users', adminGuard, (req, res, next) => {
+  try {
+    db.exec(`
+      DELETE FROM predictions_top_scorer;
+      DELETE FROM predictions_knockout;
+      DELETE FROM predictions_group;
+      DELETE FROM users;
+    `);
+    res.json({ message: 'All users and predictions cleared.' });
   } catch (err) { next(err); }
 });
 

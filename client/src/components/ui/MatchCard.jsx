@@ -1,50 +1,87 @@
 import StatusBadge from './StatusBadge';
+import { useAuth } from '../../context/AuthContext';
+import { getTimezoneForCountry } from '../../utils/timezone';
 import './MatchCard.css';
 
-// Maps WC 2026 venue names → specific city + country.
-// Checked against the official 2026 host city list.
+// Maps WC 2026 venue names → host city + country label.
+// Stadium name is already shown separately, so location shows city + country for context.
 const VENUE_MAP = [
   // 🇺🇸 USA
-  { keywords: ['MetLife', 'New Jersey', 'East Rutherford'], location: '🇺🇸 New York / New Jersey' },
-  { keywords: ['AT&T', 'Arlington', 'Dallas'],              location: '🇺🇸 Dallas, USA'           },
-  { keywords: ['SoFi', 'Inglewood'],                        location: '🇺🇸 Los Angeles, USA'      },
-  { keywords: ['Rose Bowl', 'Pasadena'],                    location: '🇺🇸 Los Angeles, USA'      },
-  { keywords: ["Levi's", 'Levi', 'Santa Clara'],            location: '🇺🇸 San Francisco, USA'    },
-  { keywords: ['Lincoln Financial', 'Philadelphia'],        location: '🇺🇸 Philadelphia, USA'     },
-  { keywords: ['Gillette', 'Foxborough', 'Boston'],         location: '🇺🇸 Boston, USA'           },
-  { keywords: ['Allegiant', 'Las Vegas'],                   location: '🇺🇸 Las Vegas, USA'        },
-  { keywords: ['Arrowhead', 'Kansas City'],                 location: '🇺🇸 Kansas City, USA'      },
-  { keywords: ['Hard Rock', 'Miami'],                       location: '🇺🇸 Miami, USA'            },
-  { keywords: ['Lumen', 'Seattle'],                         location: '🇺🇸 Seattle, USA'          },
-  { keywords: ['Mercedes-Benz', 'Atlanta'],                 location: '🇺🇸 Atlanta, USA'          },
+  { keywords: ['MetLife', 'New Jersey', 'East Rutherford'], city: 'New York',       country: '🇺🇸 USA' },
+  { keywords: ['AT&T', 'Arlington', 'Dallas'],              city: 'Dallas',         country: '🇺🇸 USA' },
+  { keywords: ['SoFi', 'Inglewood'],                        city: 'Los Angeles',    country: '🇺🇸 USA' },
+  { keywords: ['Rose Bowl', 'Pasadena'],                    city: 'Los Angeles',    country: '🇺🇸 USA' },
+  { keywords: ["Levi's", 'Levi', 'Santa Clara'],            city: 'San Francisco',  country: '🇺🇸 USA' },
+  { keywords: ['Lincoln Financial', 'Philadelphia'],        city: 'Philadelphia',   country: '🇺🇸 USA' },
+  { keywords: ['Gillette', 'Foxborough', 'Boston'],         city: 'Boston',         country: '🇺🇸 USA' },
+  { keywords: ['Allegiant', 'Las Vegas'],                   city: 'Las Vegas',      country: '🇺🇸 USA' },
+  { keywords: ['Arrowhead', 'Kansas City'],                 city: 'Kansas City',    country: '🇺🇸 USA' },
+  { keywords: ['Hard Rock', 'Miami'],                       city: 'Miami',          country: '🇺🇸 USA' },
+  { keywords: ['Lumen', 'Seattle'],                         city: 'Seattle',        country: '🇺🇸 USA' },
+  { keywords: ['Mercedes-Benz', 'Atlanta'],                 city: 'Atlanta',        country: '🇺🇸 USA' },
   // 🇲🇽 Mexico
-  { keywords: ['Azteca', 'Mexico City'],                    location: '🇲🇽 Mexico City, Mexico'   },
-  { keywords: ['Akron', 'Guadalajara'],                     location: '🇲🇽 Guadalajara, Mexico'   },
-  { keywords: ['BBVA', 'Monterrey'],                        location: '🇲🇽 Monterrey, Mexico'     },
+  { keywords: ['Azteca', 'Mexico City'],                    city: 'Mexico City',    country: '🇲🇽 Mexico' },
+  { keywords: ['Akron', 'Guadalajara'],                     city: 'Guadalajara',    country: '🇲🇽 Mexico' },
+  { keywords: ['BBVA', 'Monterrey'],                        city: 'Monterrey',      country: '🇲🇽 Mexico' },
   // 🇨🇦 Canada
-  { keywords: ['BC Place', 'Vancouver'],                    location: '🇨🇦 Vancouver, Canada'     },
-  { keywords: ['BMO', 'Toronto'],                           location: '🇨🇦 Toronto, Canada'       },
+  { keywords: ['BC Place', 'Vancouver'],                    city: 'Vancouver',      country: '🇨🇦 Canada' },
+  { keywords: ['BMO', 'Toronto'],                           city: 'Toronto',        country: '🇨🇦 Canada' },
 ];
 
 function getLocation(stadium) {
   if (!stadium) return null;
   const text = stadium.toLowerCase();
-  for (const { keywords, location } of VENUE_MAP) {
-    if (keywords.some(k => text.includes(k.toLowerCase()))) return location;
+  for (const entry of VENUE_MAP) {
+    if (entry.keywords.some(k => text.includes(k.toLowerCase()))) {
+      return { city: entry.city, country: entry.country };
+    }
   }
   return null;
 }
 
-function formatDate(utcString) {
+// Builds a Google Calendar "add event" URL from a match object.
+// Dates must be in YYYYMMDDTHHmmssZ format (UTC).
+function toGCalDate(utcString) {
+  return utcString.replace(/[-:]/g, '').replace('.000', '');
+}
+
+function buildCalendarUrl(match) {
+  const home  = match.home_team?.name ?? 'TBD';
+  const away  = match.away_team?.name ?? 'TBD';
+  const start = toGCalDate(match.match_date);
+
+  // Add 2 hours for the end time
+  const endDate = new Date(new Date(match.match_date).getTime() + 2 * 60 * 60 * 1000);
+  const end     = toGCalDate(endDate.toISOString());
+
+  const title    = `${home} vs ${away} — FIFA World Cup 2026`;
+  const details  = `${match.stage} match at ${match.stadium ?? 'TBD'}`;
+  const location = match.stadium ?? '';
+
+  const params = new URLSearchParams({
+    action:   'TEMPLATE',
+    text:     title,
+    dates:    `${start}/${end}`,
+    details,
+    location,
+  });
+
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
+function formatDate(utcString, timezone) {
   const d = new Date(utcString);
+  const tzOpts = timezone ? { timeZone: timezone } : {};
   return {
-    date: d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }),
-    time: d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+    date: d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', ...tzOpts }),
+    time: d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', ...tzOpts }),
   };
 }
 
 function MatchCard({ match }) {
-  const { date, time } = formatDate(match.match_date);
+  const { user } = useAuth();
+  const timezone = getTimezoneForCountry(user?.country);
+  const { date, time } = formatDate(match.match_date, timezone);
   const isFinished = match.status === 'FINISHED';
   const location   = getLocation(match.stadium);
   const home = match.home_team;
@@ -86,8 +123,19 @@ function MatchCard({ match }) {
 
       <div className="match-card__footer">
         <span>📅 {date}</span>
+        {location && <span>📍 {location.city}, {location.country}</span>}
         {match.stadium && <span>🏟️ {match.stadium}</span>}
-        {location && <span>📍 {location}</span>}
+        {!isFinished && (
+          <a
+            href={buildCalendarUrl(match)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="match-card__cal-btn"
+            onClick={e => e.stopPropagation()}
+          >
+            🗓️ Add to Calendar
+          </a>
+        )}
       </div>
     </div>
   );

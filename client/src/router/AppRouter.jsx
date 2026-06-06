@@ -11,6 +11,7 @@ import Login from '../pages/Auth/Login';
 import Register from '../pages/Auth/Register';
 import NotFound from '../pages/NotFound/NotFound';
 import Layout from '../components/layout/Layout';
+import Profile from '../pages/Profile/Profile';
 
 function AppRouter() {
   return (
@@ -24,6 +25,15 @@ function AppRouter() {
           <Route path="rules"    element={<NewRules />} />
           <Route path="login"    element={<Login />} />
           <Route path="register" element={<Register />} />
+
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="betting/*"

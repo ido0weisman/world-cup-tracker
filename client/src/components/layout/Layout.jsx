@@ -9,19 +9,24 @@ const WM = 'https://upload.wikimedia.org/wikipedia/commons';
 const TH = `${WM}/thumb`;
 
 const BG_IMAGES = [
-  // 2022 — Qatar
+  // ── Stadiums (WC 2026 venues + historic) ────────────────────────────────
+  `${TH}/5/5e/Luzhniki_Stadium,_2018_FIFA_World_Cup.jpg/1280px-Luzhniki_Stadium,_2018_FIFA_World_Cup.jpg`,
+  `${TH}/0/04/Metlife_stadium_%28Aerial_view%29.jpg/1280px-Metlife_stadium_%28Aerial_view%29.jpg`,
+  `${TH}/9/94/ATT_Stadium_Interior.jpg/1280px-ATT_Stadium_Interior.jpg`,
+  `${TH}/0/04/Estadio_azteca_-_panoramio.jpg/1280px-Estadio_azteca_-_panoramio.jpg`,
+  // ── 2026 WC anticipation ─────────────────────────────────────────────────
+  `${TH}/d/d2/First_game_of_the_2010_FIFA_World_Cup%2C_South_Africa_vs_Mexico3.jpg/1280px-First_game_of_the_2010_FIFA_World_Cup%2C_South_Africa_vs_Mexico3.jpg`,
+  // ── 2022 — Qatar ────────────────────────────────────────────────────────
   `${WM}/1/1e/Argentina_3-3_Francia_-_Copa_Mundial_2022_-_Messi_patea_un_penal.jpg`,
   `${WM}/2/2e/Argentina_3-3_Francia_-_Copa_Mundial_2022_-_Celebraci%C3%B3n_de_victoria.jpg`,
-  `${WM}/c/ce/Lionel-Messi-Argentina-2022-FIFA-World-Cup.jpg`,
-  // 2018 — Russia
+  // ── 2018 — Russia ────────────────────────────────────────────────────────
   `${TH}/0/0a/2018_World_Cup_Final_%282018-07-15%29_02.jpg/1920px-2018_World_Cup_Final_%282018-07-15%29_02.jpg`,
   `${WM}/1/14/France_celebrate_on_the_field_of_Luzhniki_after_the_2018_FIFA_World_Cup_Final.jpg`,
-  `${WM}/d/d9/Lionel_Messi_20180626_%28cropped%29.jpg`,
-  // 2014 — Brazil
+  // ── 2014 — Brazil ────────────────────────────────────────────────────────
   `${TH}/5/56/Mario_G%C3%B6tze_GOL_-_The_2014_FIFA_World_Cup_Final_-_140713-9112-jikatu_%2814463413827%29.jpg/1920px-Mario_G%C3%B6tze_GOL_-_The_2014_FIFA_World_Cup_Final_-_140713-9112-jikatu_%2814463413827%29.jpg`,
   `${TH}/8/89/Germany_and_Argentina_face_off_in_the_final_of_the_World_Cup_2014_-2014-07-13_%285%29.jpg/1920px-Germany_and_Argentina_face_off_in_the_final_of_the_World_Cup_2014_-2014-07-13_%285%29.jpg`,
   `${TH}/1/1f/Germany_1_-_Argentina_0_-The_2014_FIFA_World_Cup_Final_-_140713-9131-jikatu_%2814661476856%29.jpg/1920px-Germany_1_-_Argentina_0_-The_2014_FIFA_World_Cup_Final_-_140713-9131-jikatu_%2814661476856%29.jpg`,
-  // 2010 — South Africa
+  // ── 2010 — South Africa ──────────────────────────────────────────────────
   `${TH}/0/06/FIFA_World_Cup_2010_Spain_with_cup.jpg/1920px-FIFA_World_Cup_2010_Spain_with_cup.jpg`,
   `${TH}/0/0f/Spain-Holland_-_World_Champion_the_fine_art_of_diagonal_kissing.jpg/1920px-Spain-Holland_-_World_Champion_the_fine_art_of_diagonal_kissing.jpg`,
   `${TH}/5/52/Spanish_World_Cup_celebration.jpg/1920px-Spanish_World_Cup_celebration.jpg`,

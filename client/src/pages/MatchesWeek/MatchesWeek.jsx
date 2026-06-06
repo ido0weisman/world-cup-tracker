@@ -2,13 +2,17 @@ import { useFetch } from '../../hooks/useFetch';
 import { getMatchesThisWeek } from '../../api/matches.api';
 import MatchCard from '../../components/ui/MatchCard';
 import Spinner from '../../components/ui/Spinner';
+import { useAuth } from '../../context/AuthContext';
+import { getTimezoneForCountry } from '../../utils/timezone';
 import '../../pages/MatchesToday/MatchesToday.css';
 
-// Groups matches by their local date string for the "by day" layout
-function groupByDate(matches) {
+// Groups matches by their local date string for the "by day" layout,
+// respecting the user's registered country timezone.
+function groupByDate(matches, timezone) {
+  const tzOpts = timezone ? { timeZone: timezone } : {};
   return matches.reduce((acc, match) => {
     const day = new Date(match.match_date).toLocaleDateString(undefined, {
-      weekday: 'long', day: 'numeric', month: 'long',
+      weekday: 'long', day: 'numeric', month: 'long', ...tzOpts,
     });
     if (!acc[day]) acc[day] = [];
     acc[day].push(match);
@@ -18,8 +22,10 @@ function groupByDate(matches) {
 
 function MatchesWeek() {
   const { data, loading, error } = useFetch(getMatchesThisWeek);
+  const { user } = useAuth();
+  const timezone = getTimezoneForCountry(user?.country);
 
-  const grouped = data?.matches ? groupByDate(data.matches) : {};
+  const grouped = data?.matches ? groupByDate(data.matches, timezone) : {};
 
   return (
     <div className="matches-page">

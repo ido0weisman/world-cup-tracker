@@ -34,7 +34,8 @@ function Register() {
   const navigate = useNavigate();
 
   const { data: groupsData } = useFetch(getAllGroups);
-  const allTeams = groupsData?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [];
+  const allTeams = (groupsData?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [])
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const [form,    setForm]    = useState(INITIAL);
   const [error,   setError]   = useState('');

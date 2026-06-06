@@ -13,18 +13,17 @@
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 10px;
+  gap: 14px;
   padding: 1.25rem;
-  opacity: 0.18;
+  opacity: 0.22;
   pointer-events: none;
   overflow: hidden;
 }
 
 .home__flag-item {
-  width: 88px;
-  height: 58px;
+  /* width & height are set dynamically via inline style in Home.jsx */
   object-fit: cover;
-  border-radius: 3px;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 

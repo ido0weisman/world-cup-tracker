@@ -1,3 +1,18 @@
+/* ── Username link ───────────────────────────────────────────────────────────── */
+.header__username {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-white);
+  opacity: 0.85;
+  transition: opacity var(--transition), color var(--transition);
+  text-decoration: none;
+}
+
+.header__username:hover {
+  opacity: 1;
+  color: var(--color-gold);
+}
+
 /* ── Desktop nav links ──────────────────────────────────────────────────────── */
 .header__link {
   font-weight: 500;
