@@ -52,13 +52,21 @@ function Layout() {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
+  const isHome = location.pathname === '/';
+
   return (
     <div className="app-shell">
-      <div
-        className="app-bg-photo"
-        style={{ backgroundImage: `url(${bg})`, opacity }}
-      />
-      <div className="app-bg-overlay" />
+      {/* On the home page, show only the navy background (flags handle the visual).
+          On all other pages, show the rotating World Cup photo. */}
+      {!isHome && (
+        <>
+          <div
+            className="app-bg-photo"
+            style={{ backgroundImage: `url(${bg})`, opacity }}
+          />
+          <div className="app-bg-overlay" />
+        </>
+      )}
       <Header />
       <main className="main-content">
         <Outlet />

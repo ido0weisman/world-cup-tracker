@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import './Header.css';
 
 const NAV_LINKS = [
-  { to: '/',         label: 'Today',     end: true  },
+  { to: '/today',    label: 'Today',     end: false },
   { to: '/week',     label: 'This Week', end: false },
   { to: '/overview', label: 'Overview',  end: false },
   { to: '/betting',  label: 'Betting',   end: false },
@@ -20,7 +20,7 @@ function Header() {
   return (
     <header className="header">
       <NavLink to="/" className="header__logo" onClick={closeMenu}>
-        ⚽ WC 2026
+        ⚽ FIFA WORLD CUP 2026
       </NavLink>
 
       {/* Desktop navigation */}

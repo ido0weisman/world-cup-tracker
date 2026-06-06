@@ -30,7 +30,7 @@ function FactsBanner() {
         setIndex(i => (i + 1) % FACTS.length);
         setVisible(true);
       }, 500);
-    }, 5000);
+    }, 9000);
     return () => clearInterval(interval);
   }, []);
 

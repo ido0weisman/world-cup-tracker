@@ -102,6 +102,11 @@ function runMigrations() {
     db.exec('ALTER TABLE matches ADD COLUMN winner_team_id INTEGER REFERENCES teams(id)');
   }
 
+  const userCols = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+  if (!userCols.includes('country')) {
+    db.exec('ALTER TABLE users ADD COLUMN country TEXT');
+  }
+
   // Stores open-ended tournament outcomes (e.g. actual top scorer).
   // Using a key-value structure keeps it flexible for future result types.
   db.exec(`

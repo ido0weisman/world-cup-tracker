@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 
-// Pages (stubs for now — each will be built out in Phase 8)
+import Home from '../pages/Home/Home';
 import MatchesToday from '../pages/MatchesToday/MatchesToday';
 import MatchesWeek from '../pages/MatchesWeek/MatchesWeek';
 import Overview from '../pages/Overview/Overview';
@@ -10,8 +10,6 @@ import NewRules from '../pages/NewRules/NewRules';
 import Login from '../pages/Auth/Login';
 import Register from '../pages/Auth/Register';
 import NotFound from '../pages/NotFound/NotFound';
-
-// Layout
 import Layout from '../components/layout/Layout';
 
 function AppRouter() {
@@ -19,14 +17,14 @@ function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<MatchesToday />} />
-          <Route path="week" element={<MatchesWeek />} />
+          <Route index         element={<Home />} />
+          <Route path="today"  element={<MatchesToday />} />
+          <Route path="week"   element={<MatchesWeek />} />
           <Route path="overview" element={<Overview />} />
-          <Route path="rules" element={<NewRules />} />
-          <Route path="login" element={<Login />} />
+          <Route path="rules"    element={<NewRules />} />
+          <Route path="login"    element={<Login />} />
           <Route path="register" element={<Register />} />
 
-          {/* Betting is the only protected section */}
           <Route
             path="betting/*"
             element={

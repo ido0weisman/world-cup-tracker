@@ -2,13 +2,39 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../../api/auth.api';
 import { useAuth } from '../../context/AuthContext';
+import { useFetch } from '../../hooks/useFetch';
+import { getAllGroups } from '../../api/groups.api';
 import './Auth.css';
 
-const INITIAL = { full_name: '', email: '', age: '', gender: '', favorite_team: '', password: '' };
+const INITIAL = {
+  full_name: '', email: '', age: '', gender: '',
+  country: '', favorite_team: '', password: '',
+};
+
+// Common countries list (sorted alphabetically)
+const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Argentina','Armenia','Australia','Austria',
+  'Azerbaijan','Bahrain','Bangladesh','Belarus','Belgium','Bolivia','Bosnia and Herzegovina',
+  'Brazil','Bulgaria','Cameroon','Canada','Chile','China','Colombia','Costa Rica',
+  'Croatia','Cuba','Czech Republic','Denmark','Ecuador','Egypt','El Salvador',
+  'Estonia','Ethiopia','Finland','France','Germany','Ghana','Greece','Guatemala',
+  'Honduras','Hungary','India','Indonesia','Iran','Iraq','Ireland','Israel',
+  'Italy','Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kuwait','Latvia',
+  'Lebanon','Lithuania','Malaysia','Mexico','Moldova','Morocco','Netherlands',
+  'New Zealand','Nigeria','North Korea','Norway','Oman','Pakistan','Panama',
+  'Paraguay','Peru','Philippines','Poland','Portugal','Qatar','Romania','Russia',
+  'Saudi Arabia','Senegal','Serbia','Singapore','Slovakia','Slovenia','South Africa',
+  'South Korea','Spain','Sri Lanka','Sweden','Switzerland','Syria','Taiwan',
+  'Thailand','Tunisia','Turkey','UAE','Uganda','Ukraine','United Kingdom',
+  'United States','Uruguay','Uzbekistan','Venezuela','Vietnam','Yemen',
+];
 
 function Register() {
   const { login: setAuth } = useAuth();
   const navigate = useNavigate();
+
+  const { data: groupsData } = useFetch(getAllGroups);
+  const allTeams = groupsData?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [];
 
   const [form,    setForm]    = useState(INITIAL);
   const [error,   setError]   = useState('');
@@ -18,12 +44,11 @@ function Register() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  // Client-side validation mirrors the server rules (fail fast, better UX)
   function validate() {
-    if (!form.full_name.trim())               return 'Full name is required.';
+    if (!form.full_name.trim()) return 'Full name is required.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Enter a valid email.';
-    if (!form.age || form.age < 1)            return 'Enter a valid age.';
-    if (!['male','female'].includes(form.gender)) return 'Select a gender.';
+    if (!form.age || form.age < 1) return 'Enter a valid age.';
+    if (!['male', 'female'].includes(form.gender)) return 'Select a gender.';
     if (form.password.length < 6 || form.password.length > 12)
       return 'Password must be 6–12 characters.';
     return null;
@@ -77,16 +102,37 @@ function Register() {
               <option value="female">Female</option>
             </select>
           </div>
+
+          {/* Country of origin — used to confirm timezone-aware times */}
+          <div className="auth-form__field">
+            <label>Country</label>
+            <select name="country" value={form.country} onChange={handleChange}>
+              <option value="">Select your country…</option>
+              {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          {/* Favourite team — dropdown from the API */}
           <div className="auth-form__field">
             <label>Favourite Team <span className="auth-form__optional">(optional)</span></label>
-            <input name="favorite_team" value={form.favorite_team} onChange={handleChange} placeholder="e.g. Brazil" />
+            <select name="favorite_team" value={form.favorite_team} onChange={handleChange}>
+              <option value="">None / Neutral</option>
+              {allTeams.map(team => (
+                <option key={team.id} value={team.name}>{team.name}</option>
+              ))}
+            </select>
           </div>
-          <div className="auth-form__field">
+
+          <div className="auth-form__field auth-form__field--full">
             <label>Password <span className="auth-form__optional">(6–12 chars)</span></label>
             <input type="password" name="password" value={form.password} onChange={handleChange} required />
           </div>
 
-          <button type="submit" className="btn btn--primary auth-form__submit auth-form__submit--full" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn--primary auth-form__submit auth-form__submit--full"
+            disabled={loading}
+          >
             {loading ? 'Creating account…' : 'Create Account'}
           </button>
         </form>

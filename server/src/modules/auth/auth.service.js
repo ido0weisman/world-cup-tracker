@@ -52,11 +52,9 @@ function validateRegistration({ full_name, email, age, gender, password }) {
 
 // ─── Service Functions ────────────────────────────────────────────────────────
 
-async function register({ full_name, email, age, gender, favorite_team, password }) {
+async function register({ full_name, email, age, gender, favorite_team, country, password }) {
   validateRegistration({ full_name, email, age, gender, password });
 
-  // Check uniqueness before hashing — no point doing expensive bcrypt work
-  // if the email is already taken.
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
   if (existing) {
     throw createError('An account with this email already exists.', 409);
@@ -65,14 +63,15 @@ async function register({ full_name, email, age, gender, favorite_team, password
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
   const { lastInsertRowid } = db.prepare(`
-    INSERT INTO users (full_name, email, age, gender, favorite_team, password_hash)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO users (full_name, email, age, gender, favorite_team, country, password_hash)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(
     full_name.trim(),
     email.toLowerCase(),
     Number(age),
     gender.toLowerCase(),
     favorite_team || null,
+    country || null,
     password_hash
   );
 
