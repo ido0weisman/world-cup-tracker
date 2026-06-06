@@ -46,8 +46,8 @@ React **never calls the external API directly**. A Node.js cron job fetches fres
 | 2 | Core backend infrastructure (caching engine) | ✅ Done |
 | 3 | Auth routes (register, login, JWT guard) | ✅ Done |
 | 4 | Match & tournament routes | ✅ Done |
-| 5 | Betting routes & lock logic | ⏳ Next |
-| 6 | Scoring engine & leaderboard | ⏳ Pending |
+| 5 | Betting routes & lock logic | ✅ Done |
+| 6 | Scoring engine & leaderboard | ⏳ Next |
 | 7 | React shell (layout, routing, auth context) | ✅ Done |
 | 8 | Feature pages (all 5 pages + betting hub) | ⏳ Pending |
 | 9 | UI polish, animations, responsive design | ⏳ Pending |
@@ -107,5 +107,3 @@ world-cup-2026/
 ```
 
 ---
-
-*Built as a portfolio project to demonstrate full-stack skills with React, Node.js, SQLite, and REST API design.*

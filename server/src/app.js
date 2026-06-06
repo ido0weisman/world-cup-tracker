@@ -9,6 +9,7 @@ const authRoutes     = require('./modules/auth/auth.routes');
 const matchesRoutes  = require('./modules/matches/matches.routes');
 const groupsRoutes   = require('./modules/groups/groups.routes');
 const knockoutRoutes = require('./modules/knockout/knockout.routes');
+const betsRoutes     = require('./modules/bets/bets.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +29,7 @@ app.use('/api/auth',     authRoutes);
 app.use('/api/matches',  matchesRoutes);
 app.use('/api/groups',   groupsRoutes);
 app.use('/api/knockout', knockoutRoutes);
+app.use('/api/bets',    betsRoutes);
 
 // ─── Error Handler (must be last) ────────────────────────────────────────────
 app.use(errorHandler);
