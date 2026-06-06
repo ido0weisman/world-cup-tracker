@@ -1,0 +1,77 @@
+.betting__title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-gold);
+  margin-bottom: 0.3rem;
+}
+
+.betting__sub {
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.betting-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 600px) { .betting-tiles { grid-template-columns: 1fr; } }
+
+.betting-tile {
+  background: color-mix(in srgb, var(--tile-color) 40%, rgba(13,27,42,0.85));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform var(--transition), border-color var(--transition);
+  min-height: 180px;
+  backdrop-filter: blur(6px);
+}
+
+.betting-tile:hover {
+  transform: translateY(-4px);
+  border-color: rgba(245,197,24,0.4);
+}
+
+.betting-tile__icon { font-size: 2.5rem; }
+
+.betting-tile__title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-white);
+}
+
+.betting-tile__desc {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.betting-tile__cta {
+  color: var(--color-gold);
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* ── Shared back button for sub-pages ─────────────────────────────────────── */
+.betting-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color var(--transition);
+}
+.betting-back:hover { color: var(--color-gold); }

@@ -1,0 +1,163 @@
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.overview-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid rgba(255,255,255,0.08);
+  padding-bottom: 0;
+}
+
+.overview-tab {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.overview-tab:hover          { color: var(--color-white); }
+.overview-tab--active        { color: var(--color-gold); border-bottom-color: var(--color-gold); }
+
+/* ── Group tables grid ───────────────────────────────────────────────────── */
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) { .groups-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 580px) { .groups-grid { grid-template-columns: 1fr; } }
+
+.group-table {
+  background: rgba(13,27,42,0.75);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+}
+
+.group-table__name {
+  background: rgba(245,197,24,0.12);
+  color: var(--color-gold);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(245,197,24,0.15);
+}
+
+.group-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.group-table th,
+.group-table td {
+  padding: 0.45rem 0.5rem;
+  text-align: center;
+  color: rgba(255,255,255,0.7);
+}
+
+.group-table__team-col { text-align: left; }
+
+.group-table th {
+  color: rgba(255,255,255,0.35);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.group-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.group-table tbody tr:last-child { border-bottom: none; }
+
+/* Top 2 rows get a gold left border — they advance from the group */
+.group-table__row--advance td:first-child {
+  border-left: 3px solid var(--color-gold);
+}
+.group-table__row--advance { background: rgba(245,197,24,0.04); }
+
+.group-table__team-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: left;
+  font-weight: 500;
+}
+
+.group-table__flag {
+  width: 22px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.group-table__pts { font-weight: 800; color: var(--color-white); }
+
+/* ── Knockout bracket ─────────────────────────────────────────────────────── */
+.ko-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 5rem;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+}
+.ko-empty span { font-size: 3rem; }
+
+.ko-bracket { display: flex; flex-direction: column; gap: 2rem; }
+
+.ko-round__label {
+  color: var(--color-gold);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.75rem;
+}
+
+.ko-round__matches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.ko-match {
+  background: rgba(13,27,42,0.75);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ko-match__team {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.ko-match__flag {
+  width: 24px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.ko-match__score {
+  margin-left: auto;
+  font-weight: 800;
+  color: var(--color-gold);
+}

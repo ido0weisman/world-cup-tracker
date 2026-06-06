@@ -47,10 +47,10 @@ React **never calls the external API directly**. A Node.js cron job fetches fres
 | 3 | Auth routes (register, login, JWT guard) | ✅ Done |
 | 4 | Match & tournament routes | ✅ Done |
 | 5 | Betting routes & lock logic | ✅ Done |
-| 6 | Scoring engine & leaderboard | ⏳ Next |
+| 6 | Scoring engine & leaderboard | ✅ Done |
 | 7 | React shell (layout, routing, auth context) | ✅ Done |
-| 8 | Feature pages (all 5 pages + betting hub) | ⏳ Pending |
-| 9 | UI polish, animations, responsive design | ⏳ Pending |
+| 8 | Feature pages (all 5 pages + betting hub) | ✅ Done |
+| 9 | UI polish, animations, responsive design | ⏳ Next |
 
 ---
 

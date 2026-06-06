@@ -1,0 +1,36 @@
+.matches-page__title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-gold);
+  margin-bottom: 0.3rem;
+}
+
+.matches-page__sub {
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.matches-page__error {
+  color: #f87171;
+  background: rgba(220,38,38,0.1);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+}
+
+.matches-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.matches-page__empty span { font-size: 3rem; }
+
+.matches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1rem;
+}

@@ -22,6 +22,9 @@
   padding: 0;
 }
 
+/* Dark navy as the fallback shown while background images load */
+html { background: var(--color-navy); }
+
 body {
   font-family: var(--font-sans);
   color: var(--color-white);
@@ -41,15 +44,31 @@ a {
   display: flex;
   flex-direction: column;
 
-  /* Placeholder background — Phase 9 replaces this with the rotating carousel */
-  background: var(--color-navy) center/cover no-repeat;
+  background: transparent; /* fallback is on html, photo layer handles the rest */
 }
 
-.overlay {
+/* ── Background photo layer (fades on navigation) ───────────────────────────── */
+.app-bg-photo {
   position: fixed;
   inset: 0;
-  background: var(--color-overlay);
-  z-index: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 400ms ease-in-out;
+  will-change: opacity;
+}
+
+/* ── Gradient overlay — keeps text readable over any photo ──────────────────── */
+.app-bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    160deg,
+    rgba(5, 12, 35, 0.72) 0%,
+    rgba(0, 30, 60, 0.65) 100%
+  );
   pointer-events: none;
 }
 

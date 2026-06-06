@@ -1,0 +1,89 @@
+.group-bets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 900px) { .group-bets-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 580px) { .group-bets-grid { grid-template-columns: 1fr; } }
+
+.group-bet-card {
+  background: rgba(13,27,42,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  backdrop-filter: blur(6px);
+}
+
+.group-bet-card__name {
+  color: var(--color-gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.75rem;
+}
+
+.group-bet-card__teams { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.group-bet-card__team {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all var(--transition);
+}
+
+.group-bet-card__team:hover:not(.group-bet-card__team--locked) {
+  border-color: rgba(245,197,24,0.3);
+  background: rgba(245,197,24,0.05);
+}
+
+.group-bet-card__team img {
+  width: 22px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.group-bet-card__team--selected {
+  border-color: var(--color-gold) !important;
+  background: rgba(245,197,24,0.1) !important;
+  font-weight: 600;
+}
+
+.group-bet-card__team--locked { cursor: default; opacity: 0.7; }
+
+.group-bet-card__check {
+  margin-left: auto;
+  color: var(--color-gold);
+  font-weight: 800;
+}
+
+.group-bet-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.group-bet-card__hint { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
+
+.group-bet-card__message {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  color: var(--color-gold);
+}
+
+.group-bet-card__locked {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 0.6rem;
+  text-align: center;
+}
