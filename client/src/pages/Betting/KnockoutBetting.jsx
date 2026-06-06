@@ -5,6 +5,7 @@ import { getKnockoutBracket } from '../../api/knockout.api';
 import { getKnockoutBets, submitKnockoutBet } from '../../api/bets.api';
 import Spinner from '../../components/ui/Spinner';
 import StatusBadge from '../../components/ui/StatusBadge';
+import { useToast } from '../../context/ToastContext';
 import './Betting.css';
 import './KnockoutBetting.css';
 
@@ -17,22 +18,21 @@ function isMatchLocked(matchDate) {
 }
 
 function KnockoutMatchCard({ match, existingBet, onSave }) {
+  const { addToast } = useToast();
   const [selected, setSelected] = useState(existingBet?.predicted_winner?.id ?? null);
   const [saving,   setSaving]   = useState(false);
-  const [message,  setMessage]  = useState('');
   const locked = isMatchLocked(match.match_date) || match.status === 'FINISHED';
 
   async function handlePick(teamId) {
     if (locked) return;
     setSelected(teamId);
     setSaving(true);
-    setMessage('');
     try {
       await submitKnockoutBet({ match_id: match.id, predicted_winner_id: teamId });
-      setMessage('✅ Saved!');
+      addToast('Knockout pick saved!', 'success');
       onSave();
     } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to save.');
+      addToast(err.response?.data?.error || 'Failed to save.', 'error');
     } finally {
       setSaving(false);
     }
@@ -75,7 +75,6 @@ function KnockoutMatchCard({ match, existingBet, onSave }) {
         })}
       </div>
 
-      {message && <p className="ko-bet-card__message">{message}</p>}
       {locked && !match.home_team && <p className="ko-bet-card__locked">⏳ Match TBD</p>}
     </div>
   );

@@ -4,6 +4,7 @@ import { useFetch } from '../../hooks/useFetch';
 import { getAllGroups } from '../../api/groups.api';
 import { getTopScorerBet, submitTopScorerBet } from '../../api/bets.api';
 import Spinner from '../../components/ui/Spinner';
+import { useToast } from '../../context/ToastContext';
 import './Betting.css';
 import './TopScorer.css';
 
@@ -22,8 +23,8 @@ function TopScorer() {
 
   const [teamId,     setTeamId]     = useState('');
   const [playerName, setPlayerName] = useState('');
-  const [saving,     setSaving]     = useState(false);
-  const [message,    setMessage]    = useState('');
+  const { addToast } = useToast();
+  const [saving,  setSaving]  = useState(false);
 
   // Pre-fill form if a bet already exists
   const existing = betData?.bet;
@@ -32,12 +33,11 @@ function TopScorer() {
     e.preventDefault();
     if (!teamId || !playerName.trim()) { setMessage('Select a team and enter a player name.'); return; }
     setSaving(true);
-    setMessage('');
     try {
       await submitTopScorerBet({ team_id: Number(teamId), player_name: playerName.trim() });
-      setMessage('✅ Top scorer prediction saved!');
+      addToast('Top scorer pick saved!', 'success');
     } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to save.');
+      addToast(err.response?.data?.error || 'Failed to save.', 'error');
     } finally {
       setSaving(false);
     }
@@ -93,7 +93,6 @@ function TopScorer() {
             {saving ? 'Saving…' : existing ? 'Update Pick' : 'Save Pick'}
           </button>
 
-          {message && <p className="top-scorer__message">{message}</p>}
         </form>
       )}
     </div>

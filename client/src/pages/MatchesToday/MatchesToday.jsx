@@ -1,7 +1,7 @@
 import { useFetch } from '../../hooks/useFetch';
 import { getMatchesToday } from '../../api/matches.api';
 import MatchCard from '../../components/ui/MatchCard';
-import Spinner from '../../components/ui/Spinner';
+import { MatchCardSkeleton } from '../../components/ui/Skeleton';
 import './MatchesToday.css';
 
 function MatchesToday() {
@@ -14,8 +14,7 @@ function MatchesToday() {
         {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
 
-      {loading && <Spinner message="Loading today's matches…" />}
-      {error   && <p className="matches-page__error">{error}</p>}
+      {error && <p className="matches-page__error">{error}</p>}
 
       {!loading && !error && data?.matches?.length === 0 && (
         <div className="matches-page__empty">
@@ -25,9 +24,10 @@ function MatchesToday() {
       )}
 
       <div className="matches-grid">
-        {data?.matches?.map(match => (
-          <MatchCard key={match.id} match={match} />
-        ))}
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <MatchCardSkeleton key={i} />)
+          : data?.matches?.map(match => <MatchCard key={match.id} match={match} />)
+        }
       </div>
     </div>
   );

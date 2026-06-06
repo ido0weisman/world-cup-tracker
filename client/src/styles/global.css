@@ -184,3 +184,37 @@ a {
 .footer__links a:hover {
   color: var(--color-gold);
 }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(245,197,24,0.4); }
+
+/* ── Focus ring ─────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* ── Button disabled state ──────────────────────────────────────────────────── */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Page entry animation ───────────────────────────────────────────────────── */
+.main-content > * {
+  animation: page-in 0.25s ease;
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mobile tweaks ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .main-content { padding: 1.25rem; }
+  .footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+}

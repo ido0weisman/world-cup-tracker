@@ -4,6 +4,7 @@ import { useFetch } from '../../hooks/useFetch';
 import { getAllGroups } from '../../api/groups.api';
 import { getGroupBets, submitGroupBet } from '../../api/bets.api';
 import Spinner from '../../components/ui/Spinner';
+import { useToast } from '../../context/ToastContext';
 import './Betting.css';
 import './GroupBetting.css';
 
@@ -11,11 +12,11 @@ const LOCK_DATE = new Date('2026-06-15T23:59:59Z');
 const isLocked  = () => new Date() > LOCK_DATE;
 
 function GroupBettingCard({ group, existingBet, onSave }) {
+  const { addToast } = useToast();
   const [selected, setSelected] = useState(
     existingBet ? [existingBet.team1.id, existingBet.team2.id] : []
   );
-  const [saving,  setSaving]  = useState(false);
-  const [message, setMessage] = useState('');
+  const [saving, setSaving] = useState(false);
   const locked = isLocked();
 
   function toggleTeam(teamId) {
@@ -29,14 +30,14 @@ function GroupBettingCard({ group, existingBet, onSave }) {
   }
 
   async function handleSave() {
-    if (selected.length !== 2) { setMessage('Pick exactly 2 teams.'); return; }
+    if (selected.length !== 2) { addToast('Pick exactly 2 teams.', 'error'); return; }
     setSaving(true);
     try {
       await submitGroupBet({ group_name: group.group_name, team1_id: selected[0], team2_id: selected[1] });
-      setMessage('✅ Saved!');
+      addToast(`${group.group_name} pick saved!`, 'success');
       onSave();
     } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to save.');
+      addToast(err.response?.data?.error || 'Failed to save.', 'error');
     } finally {
       setSaving(false);
     }
@@ -73,8 +74,7 @@ function GroupBettingCard({ group, existingBet, onSave }) {
           </button>
         </div>
       )}
-      {message && <p className="group-bet-card__message">{message}</p>}
-      {locked   && <p className="group-bet-card__locked">🔒 Locked</p>}
+      {locked && <p className="group-bet-card__locked">🔒 Locked</p>}
     </div>
   );
 }
