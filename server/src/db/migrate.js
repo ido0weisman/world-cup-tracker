@@ -95,6 +95,23 @@ function runMigrations() {
     COMMIT;
   `);
 
+  // ── V2 additions: ALTER TABLE is not transactional in SQLite so we run
+  // these separately, guarded by a PRAGMA column check to stay idempotent.
+  const matchCols = db.prepare('PRAGMA table_info(matches)').all().map(c => c.name);
+  if (!matchCols.includes('winner_team_id')) {
+    db.exec('ALTER TABLE matches ADD COLUMN winner_team_id INTEGER REFERENCES teams(id)');
+  }
+
+  // Stores open-ended tournament outcomes (e.g. actual top scorer).
+  // Using a key-value structure keeps it flexible for future result types.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tournament_results (
+      result_key   TEXT NOT NULL UNIQUE,
+      result_value TEXT NOT NULL,
+      set_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   console.log('[DB] Migrations complete.');
 }
 

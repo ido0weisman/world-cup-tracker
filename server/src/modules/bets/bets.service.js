@@ -191,22 +191,26 @@ function getTopScorerBet(userId) {
 
 // ─── Leaderboard ─────────────────────────────────────────────────────────────
 
-// Knockout points are live (computed from is_correct, set by the Phase 6 scoring engine).
-// Group and top scorer points are computed in Phase 6 and will be added then.
+// All 3 point sources are computed live from source data — no pre-aggregated totals.
+// Group points update as standings change; knockout points update as matches finish;
+// top scorer points appear once the admin sets the tournament result.
 function getLeaderboard() {
   const rows = db.prepare(`
     SELECT
       u.id,
       u.full_name,
       u.favorite_team,
-      COALESCE(ko.knockout_points, 0) AS knockout_points,
-      0                               AS group_points,
-      0                               AS top_scorer_points,
-      COALESCE(ko.knockout_points, 0) AS total_points
+      COALESCE(ko.knockout_points,  0) AS knockout_points,
+      COALESCE(gp.group_points,     0) AS group_points,
+      COALESCE(ts.top_scorer_points,0) AS top_scorer_points,
+      COALESCE(ko.knockout_points,  0)
+        + COALESCE(gp.group_points, 0)
+        + COALESCE(ts.top_scorer_points, 0) AS total_points
     FROM users u
+
+    -- Knockout: stage-weighted points for each correct prediction
     LEFT JOIN (
-      SELECT
-        pk.user_id,
+      SELECT pk.user_id,
         SUM(CASE WHEN pk.is_correct = 1 THEN
           CASE m.stage
             WHEN 'R32'   THEN ${SCORING.R32_WINNER}
@@ -221,6 +225,36 @@ function getLeaderboard() {
       JOIN matches m ON pk.match_id = m.id
       GROUP BY pk.user_id
     ) ko ON u.id = ko.user_id
+
+    -- Group: 5pts per predicted team currently sitting in position 1 or 2.
+    -- Only counts groups where at least one match has been played — prevents
+    -- pre-tournament seedings from awarding phantom points before kickoff.
+    LEFT JOIN (
+      SELECT pg.user_id,
+        SUM(
+          CASE WHEN gs1.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END +
+          CASE WHEN gs2.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END
+        ) AS group_points
+      FROM predictions_group pg
+      JOIN group_standings gs1 ON pg.team1_id = gs1.team_id AND pg.group_name = gs1.group_name
+      JOIN group_standings gs2 ON pg.team2_id = gs2.team_id AND pg.group_name = gs2.group_name
+      WHERE EXISTS (
+        SELECT 1 FROM group_standings gs_check
+        WHERE gs_check.group_name = pg.group_name AND gs_check.played > 0
+      )
+      GROUP BY pg.user_id
+    ) gp ON u.id = gp.user_id
+
+    -- Top scorer: 20pts if player_name (case-insensitive) and team both match the stored result
+    LEFT JOIN (
+      SELECT pts.user_id, ${SCORING.TOP_SCORER} AS top_scorer_points
+      FROM predictions_top_scorer pts
+      JOIN tournament_results tr_name ON tr_name.result_key = 'top_scorer_name'
+        AND LOWER(pts.player_name) = LOWER(tr_name.result_value)
+      JOIN tournament_results tr_team ON tr_team.result_key = 'top_scorer_team_id'
+        AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
+    ) ts ON u.id = ts.user_id
+
     ORDER BY total_points DESC, u.full_name ASC
     LIMIT 25
   `).all();

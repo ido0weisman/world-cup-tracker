@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cron = require('node-cron');
 const db = require('../config/db');
+const { scoreKnockoutPredictions } = require('./scoring.service');
 
 const API_BASE = process.env.FOOTBALL_API_BASE_URL;
 const API_KEY = process.env.FOOTBALL_API_KEY;
@@ -26,6 +27,8 @@ async function fetchAndCacheMatches() {
     `).run(JSON.stringify(data));
 
     upsertMatches(data.matches);
+    // Score any newly finished knockout matches immediately after updating
+    scoreKnockoutPredictions();
     console.log(`[Cache] Matches updated at ${new Date().toISOString()}`);
   } catch (err) {
     console.error('[Cache] Failed to fetch matches:', err.message);
@@ -75,15 +78,16 @@ function upsertMatches(matches) {
   `);
 
   const upsertMatch = db.prepare(`
-    INSERT INTO matches (external_id, home_team_id, away_team_id, home_score, away_score, match_date, stadium, city, stage, status, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO matches (external_id, home_team_id, away_team_id, home_score, away_score, match_date, stadium, city, stage, status, winner_team_id, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(external_id) DO UPDATE SET
-      home_score   = excluded.home_score,
-      away_score   = excluded.away_score,
-      status       = excluded.status,
-      home_team_id = excluded.home_team_id,
-      away_team_id = excluded.away_team_id,
-      updated_at   = CURRENT_TIMESTAMP
+      home_score     = excluded.home_score,
+      away_score     = excluded.away_score,
+      status         = excluded.status,
+      home_team_id   = excluded.home_team_id,
+      away_team_id   = excluded.away_team_id,
+      winner_team_id = excluded.winner_team_id,
+      updated_at     = CURRENT_TIMESTAMP
   `);
 
   const getTeamId = db.prepare(`SELECT id FROM teams WHERE short_code = ?`);
@@ -100,6 +104,14 @@ function upsertMatches(matches) {
       const homeId = m.homeTeam?.tla ? getTeamId.get(m.homeTeam.tla)?.id : null;
       const awayId = m.awayTeam?.tla ? getTeamId.get(m.awayTeam.tla)?.id : null;
 
+      // Determine the knockout winner from the API's score.winner field.
+      // "HOME_TEAM" / "AWAY_TEAM" covers normal time, extra time, and penalties.
+      let winnerId = null;
+      if (m.status === 'FINISHED' && m.stage !== 'GROUP_STAGE') {
+        if (m.score?.winner === 'HOME_TEAM') winnerId = homeId;
+        else if (m.score?.winner === 'AWAY_TEAM') winnerId = awayId;
+      }
+
       upsertMatch.run(
         String(m.id),
         homeId,
@@ -110,7 +122,8 @@ function upsertMatches(matches) {
         m.venue || null,
         m.area?.name || null,
         normalizeStage(m.stage),
-        m.status
+        m.status,
+        winnerId
       );
     }
   });
