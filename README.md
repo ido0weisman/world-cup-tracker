@@ -6,9 +6,9 @@ A full-stack web application for tracking the FIFA World Cup 2026 — live stand
 
 ## 🔴 Live Demo
 
-> 🚧 **Upcoming...** — a hosted demo link will be posted here.
+🔗 **[wc2026-tracker.fly.dev](https://wc2026-tracker.fly.dev/)**
 
-In the meantime, follow **Run It Locally** below to try the full app on your own machine — it only takes a few minutes.
+Open the link, register an account, and explore the matches, standings, and betting features — no setup required. (Hosted as a temporary live demo; if it's ever offline, follow **Run It Locally** below to run the full app on your own machine.)
 
 ---
 
@@ -17,48 +17,35 @@ In the meantime, follow **Run It Locally** below to try the full app on your own
 | Layer | Technology |
 |---|---|
 | Frontend | React 19 + Vite |
-| Backend | Node.js + Express |
+| Backend | Node.js + Express — RESTful JSON API, organized by feature module |
 | Database | SQLite (via Node.js built-in `node:sqlite`) |
 | Auth | JWT (JSON Web Tokens) + bcrypt |
 | External Data | [football-data.org](https://www.football-data.org/) API (cached every 20 min) |
 | Routing | React Router v6 |
 | HTTP Client | Axios |
 | Scheduler | node-cron |
+| Deployment | Docker + [Fly.io](https://fly.io/) |
+
+> 🤖 Built with the help of AI coding assistants — Claude, Codex, and Cursor — used throughout for pair-programming, debugging, and code review.
 
 ---
 
 ## Features
 
-- 🗓️ **Today's & This Week's Matches** — Live match schedule with stadium and city info
+- 🗓️ **Today's Matches & Schedule** — Live match schedule with stadium/city info; switch between this week's games and the full tournament schedule
 - 📊 **Group Stage Overview** — All 12 groups with live standings, auto-updated from the API
 - 🏆 **Knockout Bracket** — Visual bracket that populates as the tournament progresses
-- 📜 **New Rules** — Interactive cards explaining the 2026 rule changes
-- 🔐 **User Auth** — Register / login with JWT-based sessions
-- 🎯 **Betting System** — Predict group qualifiers, knockout winners, and top scorer
-- 🏅 **Leaderboard** — Top 25 users ranked by prediction accuracy
+- 📜 **New Rules** — Interactive cards explaining the 2026 format changes (48 teams, third-place qualification, time-wasting rules, and more)
+- 🔐 **User Auth & Profiles** — Register / log in with JWT-based sessions and a personal profile page
+- 🎯 **Betting System** — Predict group qualifiers, knockout winners, and the tournament's top scorer
+- 🏅 **Leaderboard & Live Score** — See your total points right in the header, check your rank on the leaderboard, and view a built-in breakdown of how scoring works
+- 📅 **Add to Calendar** — One-click button to add any match straight to your calendar
 
 ---
 
 ## Architecture Highlight: Caching Strategy
 
 React **never calls the external API directly**. A Node.js cron job fetches fresh data from football-data.org every 20 minutes and writes it to SQLite. All client requests read from our own database — fast, rate-limit-safe, and resilient to API downtime.
-
----
-
-## Build Phases
-
-| # | Phase | Status |
-|---|---|---|
-| 0 | Environment setup & project scaffold | ✅ Done |
-| 1 | Database schema & migrations | ✅ Done |
-| 2 | Core backend infrastructure (caching engine) | ✅ Done |
-| 3 | Auth routes (register, login, JWT guard) | ✅ Done |
-| 4 | Match & tournament routes | ✅ Done |
-| 5 | Betting routes & lock logic | ✅ Done |
-| 6 | Scoring engine & leaderboard | ✅ Done |
-| 7 | React shell (layout, routing, auth context) | ✅ Done |
-| 8 | Feature pages (all 5 pages + betting hub) | ✅ Done |
-| 9 | UI polish, animations, responsive design | ⏳ Next |
 
 ---
 

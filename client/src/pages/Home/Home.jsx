@@ -6,7 +6,7 @@ import './Home.css';
 
 const NAV_TILES = [
   { to: '/today',    icon: '🗓️',  title: "Today's Matches",  desc: 'Live scores & today\'s schedule'  },
-  { to: '/week',     icon: '📅',  title: 'This Week',         desc: 'Upcoming matches for the next 7 days' },
+  { to: '/week',     icon: '📅',  title: 'Schedule',          desc: 'This week\'s matches — or browse the full tournament schedule' },
   { to: '/overview', icon: '📊',  title: 'Overview',          desc: 'Group tables & knockout bracket'  },
   { to: '/betting',  icon: '🎯',  title: 'Betting Hub',       desc: 'Make your predictions & check the leaderboard' },
 ];

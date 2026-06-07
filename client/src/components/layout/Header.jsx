@@ -11,7 +11,7 @@ const fetchNothing = () => Promise.resolve(null);
 
 const NAV_LINKS = [
   { to: '/today',    label: 'Today',     end: false },
-  { to: '/week',     label: 'This Week', end: false },
+  { to: '/week',     label: 'Schedule',  end: false },
   { to: '/overview', label: 'Overview',  end: false },
   { to: '/betting',  label: 'Betting',   end: false },
   { to: '/rules',    label: 'New Rules', end: false },

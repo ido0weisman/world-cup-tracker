@@ -3,7 +3,7 @@ function Footer() {
     <footer className="footer">
       <div className="footer__left">
         <p className="footer__about">World Cup 2026 Tracker &amp; Betting App</p>
-        <p className="footer__disclaimer">Independent fan-made project, built for educational &amp; portfolio purposes only. Not affiliated with, endorsed by, or sponsored by FIFA or any football organization. All team names, logos, and competition names are property of their respective owners.</p>
+        <p className="footer__disclaimer">Independent fan project — not affiliated with or endorsed by FIFA. Names &amp; logos belong to their respective owners.</p>
       </div>
       <div className="footer__links">
         <a href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
