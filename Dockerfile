@@ -3,7 +3,10 @@
 FROM node:22-slim AS client-builder
 WORKDIR /app/client
 COPY client/package*.json ./
-RUN npm install
+# --legacy-peer-deps: the client's eslint v9 and @eslint/js v10 devDependencies
+# have a peer-dependency conflict that npm's default resolver rejects. It only
+# affects linting (not the production build), so relaxing the check here is safe.
+RUN npm install --legacy-peer-deps
 COPY client/ ./
 RUN npm run build
 

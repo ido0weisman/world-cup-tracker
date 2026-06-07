@@ -4,6 +4,14 @@ A full-stack web application for tracking the FIFA World Cup 2026 — live stand
 
 ---
 
+## 🔴 Live Demo
+
+> 🚧 **Upcoming...** — a hosted demo link will be posted here.
+
+In the meantime, follow **Run It Locally** below to try the full app on your own machine — it only takes a few minutes.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -54,26 +62,53 @@ React **never calls the external API directly**. A Node.js cron job fetches fres
 
 ---
 
-## Getting Started
+## Run It Locally
 
 ### Prerequisites
-- Node.js v22+ (project uses built-in `node:sqlite`)
-- A free API key from [football-data.org](https://www.football-data.org/)
+- [Node.js v22+](https://nodejs.org/) — the backend uses the built-in `node:sqlite` module
+- A free API key from [football-data.org](https://www.football-data.org/client/register) (just an email signup, takes under a minute)
 
-### Server
+### 1. Clone the repo
 ```bash
-cd server
-cp .env.example .env      # Fill in your API key and JWT secret
-npm install
-npm run dev               # Runs on http://localhost:5000
+git clone https://github.com/<your-username>/world-cup-2026.git
+cd world-cup-2026
 ```
 
-### Client
+### 2. Set up the server
+```bash
+cd server
+cp .env.example .env
+npm install
+```
+
+Open the new `.env` file and fill in the values:
+
+| Variable | What to put |
+|---|---|
+| `JWT_SECRET` | Any long random string — signs login tokens |
+| `ADMIN_KEY` | Any string you choose — unlocks the admin routes |
+| `FOOTBALL_API_KEY` | Your free key from football-data.org |
+| `FOOTBALL_API_BASE_URL` | `https://api.football-data.org/v4` |
+| `PORT` | `5000` (or any free port) |
+| `DB_PATH` | `./src/db/database.sqlite` |
+| `CACHE_INTERVAL_MINUTES` | `20` — how often the server refreshes data from the API |
+
+Then start it:
+```bash
+npm run dev               # Runs on http://localhost:5000
+```
+The SQLite database and tables are created automatically on first run.
+
+### 3. Set up the client
+In a second terminal:
 ```bash
 cd client
 npm install
 npm run dev               # Runs on http://localhost:5173
 ```
+
+### 4. Open the app
+Visit **http://localhost:5173**, register an account, and explore the matches, standings, and betting features.
 
 ### Verify the server is running
 ```
