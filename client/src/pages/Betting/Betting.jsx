@@ -10,7 +10,7 @@ const TILES = [
     path:    'groups',
     icon:    '📊',
     title:   'Group Stage',
-    desc:    'Pick 2 teams per group to advance. Locked on June 15.',
+    desc:    'Pick 2 teams per group to advance. Locks June 11, 1hr before kickoff.',
     color:   '#1a6b3c',
   },
   {
@@ -24,7 +24,7 @@ const TILES = [
     path:    'top-scorer',
     icon:    '⚽',
     title:   'Top Scorer',
-    desc:    'Pick the player who will score the most goals. Locked on June 15.',
+    desc:    'Pick the player who will score the most goals. Locks June 11, 1hr before kickoff.',
     color:   '#6b1a1a',
   },
   {

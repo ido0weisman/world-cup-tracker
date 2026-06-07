@@ -1,3 +1,63 @@
+.leaderboard__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.leaderboard__info-btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-gold);
+  background: rgba(245,197,24,0.1);
+  border: 1px solid rgba(245,197,24,0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.leaderboard__info-btn:hover {
+  background: rgba(245,197,24,0.18);
+  border-color: var(--color-gold);
+}
+
+.leaderboard__scoring-panel {
+  max-width: 720px;
+  background: rgba(13,27,42,0.85);
+  border: 1px solid rgba(245,197,24,0.25);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(6px);
+}
+
+.leaderboard__scoring-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-gold);
+  margin: 0 0 0.6rem;
+}
+
+.leaderboard__scoring-list {
+  margin: 0 0 0.75rem;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.85);
+}
+
+.leaderboard__scoring-list li { margin-bottom: 0.3rem; }
+.leaderboard__scoring-list strong { color: var(--color-white); }
+
+.leaderboard__scoring-note {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  margin: 0;
+}
+
 .leaderboard {
   max-width: 720px;
   background: rgba(13,27,42,0.8);

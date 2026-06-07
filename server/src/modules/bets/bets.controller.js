@@ -49,6 +49,13 @@ async function getLeaderboard(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function getMyScore(req, res, next) {
+  try {
+    const score = betsService.getUserScore(req.user.userId);
+    res.json({ score });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   submitGroupBet,
   getGroupBets,
@@ -57,4 +64,5 @@ module.exports = {
   submitTopScorerBet,
   getTopScorerBet,
   getLeaderboard,
+  getMyScore,
 };

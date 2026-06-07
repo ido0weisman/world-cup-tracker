@@ -262,6 +262,69 @@ function getLeaderboard() {
   return rows.map((row, index) => ({ rank: index + 1, ...row }));
 }
 
+// Single-user version of the leaderboard query (no LIMIT) — lets the header
+// show "your points" even for users outside the top 25.
+function getUserScore(userId) {
+  const row = db.prepare(`
+    SELECT
+      u.id,
+      u.full_name,
+      COALESCE(ko.knockout_points,  0) AS knockout_points,
+      COALESCE(gp.group_points,     0) AS group_points,
+      COALESCE(ts.top_scorer_points,0) AS top_scorer_points,
+      COALESCE(ko.knockout_points,  0)
+        + COALESCE(gp.group_points, 0)
+        + COALESCE(ts.top_scorer_points, 0) AS total_points
+    FROM users u
+
+    LEFT JOIN (
+      SELECT pk.user_id,
+        SUM(CASE WHEN pk.is_correct = 1 THEN
+          CASE m.stage
+            WHEN 'R32'   THEN ${SCORING.R32_WINNER}
+            WHEN 'R16'   THEN ${SCORING.R16_WINNER}
+            WHEN 'QF'    THEN ${SCORING.QF_WINNER}
+            WHEN 'SF'    THEN ${SCORING.SF_WINNER}
+            WHEN 'FINAL' THEN ${SCORING.FINAL_WINNER}
+            ELSE 0
+          END
+        ELSE 0 END) AS knockout_points
+      FROM predictions_knockout pk
+      JOIN matches m ON pk.match_id = m.id
+      GROUP BY pk.user_id
+    ) ko ON u.id = ko.user_id
+
+    LEFT JOIN (
+      SELECT pg.user_id,
+        SUM(
+          CASE WHEN gs1.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END +
+          CASE WHEN gs2.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END
+        ) AS group_points
+      FROM predictions_group pg
+      JOIN group_standings gs1 ON pg.team1_id = gs1.team_id AND pg.group_name = gs1.group_name
+      JOIN group_standings gs2 ON pg.team2_id = gs2.team_id AND pg.group_name = gs2.group_name
+      WHERE EXISTS (
+        SELECT 1 FROM group_standings gs_check
+        WHERE gs_check.group_name = pg.group_name AND gs_check.played > 0
+      )
+      GROUP BY pg.user_id
+    ) gp ON u.id = gp.user_id
+
+    LEFT JOIN (
+      SELECT pts.user_id, ${SCORING.TOP_SCORER} AS top_scorer_points
+      FROM predictions_top_scorer pts
+      JOIN tournament_results tr_name ON tr_name.result_key = 'top_scorer_name'
+        AND LOWER(pts.player_name) = LOWER(tr_name.result_value)
+      JOIN tournament_results tr_team ON tr_team.result_key = 'top_scorer_team_id'
+        AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
+    ) ts ON u.id = ts.user_id
+
+    WHERE u.id = ?
+  `).get(userId);
+
+  return row || { id: userId, total_points: 0, knockout_points: 0, group_points: 0, top_scorer_points: 0 };
+}
+
 module.exports = {
   submitGroupBet,
   getGroupBets,
@@ -269,5 +332,6 @@ module.exports = {
   getKnockoutBets,
   submitTopScorerBet,
   getTopScorerBet,
+  getUserScore,
   getLeaderboard,
 };

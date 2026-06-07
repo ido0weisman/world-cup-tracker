@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useFetch } from '../../hooks/useFetch';
-import { getMatchesThisWeek } from '../../api/matches.api';
+import { getMatchesThisWeek, getAllMatches } from '../../api/matches.api';
 import MatchCard from '../../components/ui/MatchCard';
 import Spinner from '../../components/ui/Spinner';
 import { useAuth } from '../../context/AuthContext';
@@ -21,24 +22,45 @@ function groupByDate(matches, timezone) {
 }
 
 function MatchesWeek() {
-  const { data, loading, error } = useFetch(getMatchesThisWeek);
+  const [showAll, setShowAll] = useState(false);
+
+  const { data, loading, error } = useFetch(
+    showAll ? getAllMatches : getMatchesThisWeek,
+    [showAll]
+  );
   const { user } = useAuth();
   const timezone = getTimezoneForCountry(user?.country);
 
   const grouped = data?.matches ? groupByDate(data.matches, timezone) : {};
+  const matchCount = data?.matches?.length ?? 0;
 
   return (
     <div className="matches-page">
-      <h1 className="matches-page__title">This Week's Matches</h1>
-      <p className="matches-page__sub">Next 7 days</p>
+      <h1 className="matches-page__title">
+        {showAll ? '🌍 Full Tournament Schedule' : "This Week's Matches"}
+      </h1>
+      <p className="matches-page__sub">
+        {showAll
+          ? `Every match of the 2026 World Cup${matchCount ? ` — all ${matchCount} games` : ''}`
+          : 'Next 7 days'}
+      </p>
 
-      {loading && <Spinner message="Loading this week's matches…" />}
+      <button
+        type="button"
+        className="btn btn--outline"
+        onClick={() => setShowAll(s => !s)}
+        style={{ marginBottom: '1.75rem' }}
+      >
+        {showAll ? '📅 Back to This Week' : '🌍 Show the entire tournament schedule (all matches)'}
+      </button>
+
+      {loading && <Spinner message={showAll ? 'Loading the full tournament schedule…' : "Loading this week's matches…"} />}
       {error   && <p className="matches-page__error">{error}</p>}
 
-      {!loading && !error && data?.matches?.length === 0 && (
+      {!loading && !error && matchCount === 0 && (
         <div className="matches-page__empty">
           <span>📅</span>
-          <p>No matches scheduled this week.</p>
+          <p>{showAll ? 'No matches found.' : 'No matches scheduled this week.'}</p>
         </div>
       )}
 

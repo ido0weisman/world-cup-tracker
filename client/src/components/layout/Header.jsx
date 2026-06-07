@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useFetch } from '../../hooks/useFetch';
+import { getMyScore } from '../../api/bets.api';
 import './Header.css';
+
+// Resolves to `null` for guests so we never call an auth-only endpoint
+// without a logged-in user.
+const fetchNothing = () => Promise.resolve(null);
 
 const NAV_LINKS = [
   { to: '/today',    label: 'Today',     end: false },
@@ -15,12 +21,16 @@ function Header() {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Logged-in users see their live prediction score; guests skip the call entirely.
+  const { data: scoreData } = useFetch(user ? getMyScore : fetchNothing, [user?.id]);
+  const points = scoreData?.score?.total_points ?? 0;
+
   const closeMenu = () => setMenuOpen(false);
 
   return (
     <header className="header">
       <NavLink to="/" className="header__logo" onClick={closeMenu}>
-        ⚽ FIFA WORLD CUP 2026
+        🏆 WC TRACKER
       </NavLink>
 
       {/* Desktop navigation */}
@@ -37,6 +47,7 @@ function Header() {
       <div className="header__auth">
         {user ? (
           <>
+            <span className="header__points" title="Your total prediction points">🏅 {points} pts</span>
             <NavLink to="/profile" className="header__username">👤 {user.full_name.split(' ')[0]}</NavLink>
             <button onClick={logout} className="btn btn--outline">Log out</button>
           </>
@@ -69,6 +80,7 @@ function Header() {
           <div className="mobile-menu__divider" />
           {user ? (
             <>
+              <span className="header__points header__points--mobile" title="Your total prediction points">🏅 {points} pts</span>
               <NavLink to="/profile" onClick={closeMenu} className="mobile-menu__link">
                 👤 {user.full_name.split(' ')[0]}
               </NavLink>

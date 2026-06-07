@@ -18,4 +18,13 @@ function getThisWeek(req, res, next) {
   }
 }
 
-module.exports = { getToday, getThisWeek };
+function getAll(req, res, next) {
+  try {
+    const matches = matchesService.getAllMatches();
+    res.json({ matches });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getToday, getThisWeek, getAll };

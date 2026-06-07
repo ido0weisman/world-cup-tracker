@@ -17,5 +17,6 @@ router.post('/top-scorer',  betsController.submitTopScorerBet);
 router.get('/top-scorer',   betsController.getTopScorerBet);
 
 router.get('/leaderboard',  betsController.getLeaderboard);
+router.get('/my-score',     betsController.getMyScore);
 
 module.exports = router;

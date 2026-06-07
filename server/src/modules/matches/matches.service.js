@@ -62,4 +62,15 @@ function getMatchesThisWeek() {
   return rows.map(formatMatch);
 }
 
-module.exports = { getMatchesToday, getMatchesThisWeek };
+// Returns every match in the tournament (all 104 games), oldest first —
+// used by the "show all matches" view so visitors can browse the full schedule.
+function getAllMatches() {
+  const rows = db.prepare(`
+    ${MATCH_SELECT}
+    ORDER BY m.match_date ASC
+  `).all();
+
+  return rows.map(formatMatch);
+}
+
+module.exports = { getMatchesToday, getMatchesThisWeek, getAllMatches };

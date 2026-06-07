@@ -21,6 +21,12 @@ const RULES = [
     detail: 'The tournament features 12 groups of 4 teams. The top 2 from each group advance automatically, and the 8 best third-placed teams also progress — making a total of 32 teams entering the knockout rounds.',
   },
   {
+    icon: '🥉',
+    title: 'How the Best Third-Placed Teams Are Chosen',
+    summary: 'A cross-group ranking decides the final 8 spots',
+    detail: 'With 12 groups, there are 12 third-placed teams — but only 8 of them advance. FIFA lines all 12 up in a single ranking table and compares them, in order, by: total points, goal difference, goals scored, Fair Play points (fewer yellow/red cards = better), and finally a draw if it\'s still level. The top 8 in that ranking claim the remaining Round of 32 spots alongside the 24 group winners and runners-up — so even finishing third in your group can be enough if it was a tightly fought one.',
+  },
+  {
     icon: '🥊',
     title: 'Round of 32 — A Brand New Stage',
     summary: 'New knockout round before the Last 16',

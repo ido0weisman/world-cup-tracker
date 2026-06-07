@@ -10,3 +10,4 @@ export const submitTopScorerBet = (data) => apiClient.post('/bets/top-scorer', d
 export const getTopScorerBet    = ()     => apiClient.get('/bets/top-scorer').then(r => r.data);
 
 export const getLeaderboard     = ()     => apiClient.get('/bets/leaderboard').then(r => r.data);
+export const getMyScore         = ()     => apiClient.get('/bets/my-score').then(r => r.data);

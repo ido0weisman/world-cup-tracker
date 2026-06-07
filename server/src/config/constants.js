@@ -29,8 +29,9 @@ const SCORING = {
 
 // Betting lock rules
 const LOCK = {
-  // Group stage and top scorer lock (ISO date string — midnight UTC)
-  GROUP_STAGE_LOCK_DATE: '2026-06-15T23:59:59Z',
+  // Group stage and top scorer lock — 1 hour before the opening match
+  // (Mexico vs South Africa, Estadio Azteca, kickoff 19:00 UTC on June 11, 2026)
+  GROUP_STAGE_LOCK_DATE: '2026-06-11T18:00:00Z',
   // Hours before a knockout match starts that predictions are locked
   KNOCKOUT_LOCK_HOURS_BEFORE: 1,
   // Hours after the last match of a stage that the next stage unlocks
