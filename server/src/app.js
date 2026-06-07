@@ -2,6 +2,7 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
 const runMigrations = require('./db/migrate');
 const { initCacheService } = require('./services/apiCache.service');
@@ -17,10 +18,37 @@ const squadsRoutes   = require('./modules/squads/squads.routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ─── Rate Limiting ────────────────────────────────────────────────────────────
+// Protects against bot floods / abusive traffic spikes — caps how many
+// requests a single IP can make in a given window. `standardHeaders` exposes
+// the limit info via RateLimit-* response headers; `legacyHeaders` (the old
+// X-RateLimit-* ones) are disabled since clients don't need both.
+
+// Generous limiter for the whole API — guards against runaway/bot traffic
+// without getting in the way of normal browsing.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300,                 // ~20 requests/minute per IP on average
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP — please try again in a few minutes.' },
+});
+
+// Stricter limiter for auth endpoints — these are the prime target for bots
+// trying to mass-create accounts or brute-force logins.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,                  // ~1 attempt/minute per IP on average
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many auth attempts from this IP — please try again in 15 minutes.' },
+});
+
 // ─── Global Middleware ────────────────────────────────────────────────────────
 
 app.use(cors({ origin: 'http://localhost:5173' })); // Vite's default dev port
 app.use(express.json());
+app.use('/api', apiLimiter);
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
@@ -28,6 +56,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/login',    authLimiter);
 app.use('/api/auth',     authRoutes);
 app.use('/api/matches',  matchesRoutes);
 app.use('/api/groups',   groupsRoutes);
