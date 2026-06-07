@@ -1,0 +1,36 @@
+# fly.toml — Fly.io app configuration
+# `fly launch` will generate/overwrite parts of this; the values below are the
+# ones that matter for this app. Adjust `app` to whatever name you pick
+# (it must be globally unique — becomes <app>.fly.dev).
+
+app = "wc2026-tracker"
+primary_region = "lhr"   # London — pick whatever's closest to you/your friends
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  PORT     = "3001"
+  DB_PATH  = "/data/database.sqlite"
+  FOOTBALL_API_BASE_URL = "https://api.football-data.org/v4"
+  # JWT_SECRET, ADMIN_KEY, FOOTBALL_API_KEY are secrets — set with `fly secrets set`, never here
+
+# Persistent volume for the SQLite file — survives deploys/restarts.
+# Create it first with: fly volumes create wc2026_data --size 1
+[[mounts]]
+  source      = "wc2026_data"
+  destination = "/data"
+
+[http_service]
+  internal_port       = 3001
+  force_https         = true
+  auto_stop_machines  = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[http_service.checks]]
+  interval     = "30s"
+  timeout      = "5s"
+  grace_period = "10s"
+  method       = "GET"
+  path         = "/api/health"

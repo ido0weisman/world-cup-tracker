@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -34,6 +35,18 @@ app.use('/api/knockout', knockoutRoutes);
 app.use('/api/bets',    betsRoutes);
 app.use('/api/admin',   adminRoutes);
 app.use('/api/squads',  squadsRoutes);
+
+// ─── Production: serve the built React app ──────────────────────────────────
+// In production Express also serves the Vite build output — one server, one
+// origin, no CORS needed for the frontend itself. The catch-all below hands
+// any non-API route to React Router so direct URL visits/refreshes work.
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = path.join(__dirname, '../../client/dist');
+  app.use(express.static(clientDist));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
 
 // ─── Error Handler (must be last) ────────────────────────────────────────────
 app.use(errorHandler);
