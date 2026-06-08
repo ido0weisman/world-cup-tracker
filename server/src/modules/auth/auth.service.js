@@ -112,4 +112,25 @@ function getMe(userId) {
   return sanitizeUser(user);
 }
 
-module.exports = { register, login, getMe };
+// Lets a user update the two preferences that can change after signup:
+// their country (used to localize match kickoff times) and favourite team.
+// Both are optional/nullable — sending an empty value clears the field
+// (e.g. switching back to "no favourite team").
+function updateMe(userId, { country, favorite_team }) {
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  if (!user) {
+    throw createError('User not found.', 404);
+  }
+
+  db.prepare(`
+    UPDATE users SET country = ?, favorite_team = ? WHERE id = ?
+  `).run(
+    country?.trim() || null,
+    favorite_team?.trim() || null,
+    userId
+  );
+
+  return sanitizeUser(db.prepare('SELECT * FROM users WHERE id = ?').get(userId));
+}
+
+module.exports = { register, login, getMe, updateMe };

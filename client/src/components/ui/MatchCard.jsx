@@ -1,6 +1,6 @@
 import StatusBadge from './StatusBadge';
 import { useAuth } from '../../context/AuthContext';
-import { getTimezoneForCountry } from '../../utils/timezone';
+import { getTimezoneForCountry, MATCH_LOCALE } from '../../utils/timezone';
 import './MatchCard.css';
 
 // Maps WC 2026 venue names → host city + country label.
@@ -73,8 +73,8 @@ function formatDate(utcString, timezone) {
   const d = new Date(utcString);
   const tzOpts = timezone ? { timeZone: timezone } : {};
   return {
-    date: d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', ...tzOpts }),
-    time: d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', ...tzOpts }),
+    date: d.toLocaleDateString(MATCH_LOCALE, { weekday: 'short', day: 'numeric', month: 'short', ...tzOpts }),
+    time: d.toLocaleTimeString(MATCH_LOCALE, { hour: '2-digit', minute: '2-digit', ...tzOpts }),
   };
 }
 

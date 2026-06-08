@@ -4,30 +4,13 @@ import { register } from '../../api/auth.api';
 import { useAuth } from '../../context/AuthContext';
 import { useFetch } from '../../hooks/useFetch';
 import { getAllGroups } from '../../api/groups.api';
+import { COUNTRIES } from '../../utils/countries';
 import './Auth.css';
 
 const INITIAL = {
   full_name: '', email: '', age: '', gender: '',
   country: '', favorite_team: '', password: '',
 };
-
-// Common countries list (sorted alphabetically)
-const COUNTRIES = [
-  'Afghanistan','Albania','Algeria','Argentina','Armenia','Australia','Austria',
-  'Azerbaijan','Bahrain','Bangladesh','Belarus','Belgium','Bolivia','Bosnia and Herzegovina',
-  'Brazil','Bulgaria','Cameroon','Canada','Chile','China','Colombia','Costa Rica',
-  'Croatia','Cuba','Czech Republic','Denmark','Ecuador','Egypt','El Salvador',
-  'Estonia','Ethiopia','Finland','France','Germany','Ghana','Greece','Guatemala',
-  'Honduras','Hungary','India','Indonesia','Iran','Iraq','Ireland','Israel',
-  'Italy','Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kuwait','Latvia',
-  'Lebanon','Lithuania','Malaysia','Mexico','Moldova','Morocco','Netherlands',
-  'New Zealand','Nigeria','North Korea','Norway','Oman','Pakistan','Panama',
-  'Paraguay','Peru','Philippines','Poland','Portugal','Qatar','Romania','Russia',
-  'Saudi Arabia','Senegal','Serbia','Singapore','Slovakia','Slovenia','South Africa',
-  'South Korea','Spain','Sri Lanka','Sweden','Switzerland','Syria','Taiwan',
-  'Thailand','Tunisia','Turkey','UAE','Uganda','Ukraine','United Kingdom',
-  'United States','Uruguay','Uzbekistan','Venezuela','Vietnam','Yemen',
-];
 
 function Register() {
   const { login: setAuth } = useAuth();

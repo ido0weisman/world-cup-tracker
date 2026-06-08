@@ -9,6 +9,7 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 
 // Protected — authGuard verifies the JWT before the controller runs
-router.get('/me', authGuard, authController.getMe);
+router.get('/me',   authGuard, authController.getMe);
+router.patch('/me', authGuard, authController.updateMe);
 
 module.exports = router;

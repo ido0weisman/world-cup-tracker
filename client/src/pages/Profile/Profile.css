@@ -110,3 +110,25 @@
   font-weight: 700;
   color: var(--color-white);
 }
+
+/* ── Edit mode ────────────────────────────────────────────────────────────── */
+.profile__edit-select {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.profile__edit-select:focus { border-color: var(--color-gold); }
+.profile__edit-select option { background: var(--color-navy); }
+
+.profile__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}

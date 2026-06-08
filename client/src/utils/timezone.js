@@ -1,3 +1,10 @@
+// Match dates/times are always formatted in English, regardless of the
+// visitor's browser language — only the *timezone* adapts (to the user's
+// chosen country, via getTimezoneForCountry below). That keeps schedules
+// readable for every visitor while kickoff times still land in a zone that
+// means something to them.
+export const MATCH_LOCALE = 'en-US';
+
 // Maps each country name (as stored in the users table) to its primary IANA timezone.
 // For countries with multiple timezones, the capital / most-populated timezone is used.
 const COUNTRY_TIMEZONES = {

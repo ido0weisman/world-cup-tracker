@@ -7,6 +7,7 @@ import Spinner from '../../components/ui/Spinner';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { useToast } from '../../context/ToastContext';
 import { getMatchPreview } from '../../utils/knockoutPreviews';
+import { MATCH_LOCALE } from '../../utils/timezone';
 import './Betting.css';
 import './KnockoutBetting.css';
 
@@ -50,7 +51,7 @@ function KnockoutMatchCard({ match, existingBet, preview, onSave }) {
     <div className="ko-bet-card">
       <div className="ko-bet-card__header">
         <span className="ko-bet-card__date">
-          {new Date(match.match_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+          {new Date(match.match_date).toLocaleDateString(MATCH_LOCALE, { day: 'numeric', month: 'short' })}
         </span>
         <StatusBadge status={match.status} />
       </div>

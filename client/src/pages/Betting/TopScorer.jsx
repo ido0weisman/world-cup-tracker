@@ -118,12 +118,6 @@ function TopScorer() {
               <p className="ts-current-pick__name">{existing.player_name}</p>
               <p className="ts-current-pick__team">{existing.team.name}</p>
             </div>
-            {!locked && (
-              <button className="ts-current-pick__change btn btn--outline"
-                onClick={() => { setStep(1); setPickedTeam(null); }}>
-                Change
-              </button>
-            )}
           </div>
         </div>
       )}

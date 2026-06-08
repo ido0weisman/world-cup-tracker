@@ -32,4 +32,13 @@ function getMe(req, res, next) {
   }
 }
 
-module.exports = { register, login, getMe };
+function updateMe(req, res, next) {
+  try {
+    const user = authService.updateMe(req.user.userId, req.body);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, getMe, updateMe };

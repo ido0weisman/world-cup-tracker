@@ -34,8 +34,15 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  // Replaces the in-memory user (e.g. after a profile edit returns the
+  // updated record) without touching the stored token — the user is still
+  // logged in, just with fresher data.
+  function updateUser(userData) {
+    setUser(userData);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

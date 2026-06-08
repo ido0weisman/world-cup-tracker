@@ -60,8 +60,6 @@
   color: rgba(255,255,255,0.5);
 }
 
-.ts-current-pick__change { margin-left: auto; }
-
 /* ── Step label ─────────────────────────────────────────────────────────────── */
 .ts-step-label {
   font-size: 0.8rem;
