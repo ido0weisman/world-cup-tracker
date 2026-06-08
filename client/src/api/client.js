@@ -17,11 +17,22 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // Global response error interceptor.
-// A 401 means the token expired or is invalid — clear it and redirect to login.
+// A 401 from a protected endpoint means the stored token expired or is
+// invalid — clear it and bounce to the login page.
+//
+// The login/register endpoints ALSO answer with 401/409 for things like
+// "Invalid email or password" — those aren't session problems, they're the
+// page's own form-validation errors and the component already renders them.
+// Without this check, the global redirect below fires first, hard-navigates
+// to /login (wiping React state) and the user never sees "Invalid email or
+// password" — it looks like the login page just silently reloads.
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url || '';
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('wc2026_token');
       window.location.href = '/login';
     }

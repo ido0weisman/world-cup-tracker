@@ -12,16 +12,49 @@ import './KnockoutBetting.css';
 const STAGE_LABELS = { R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter Finals', SF: 'Semi Finals', FINAL: 'Final' };
 const LOCK_HOURS   = 1;
 
+// FIFA's official Round of 32 schedule (Matches 73–88), in kickoff order —
+// published ahead of the tournament in the regulations' bracket template.
+// Pairs that depend on which 8 third-placed teams qualify can't be pinned to
+// one exact group until the group stage ends, so those show the shortlist of
+// groups the qualifying team could come from instead of a single guess.
+// We zip this onto the R32 matches by index since the backend already returns
+// them ordered by kickoff date — the same order FIFA numbered them in.
+const R32_PREVIEWS = [
+  ['2nd place Group A', '2nd place Group B'],
+  ['1st place Group E', 'Best 3rd-placed team (Groups A/B/C/D/F)'],
+  ['1st place Group F', '2nd place Group C'],
+  ['1st place Group C', '2nd place Group F'],
+  ['1st place Group I', 'Best 3rd-placed team (Groups C/D/F/G/H)'],
+  ['2nd place Group E', '2nd place Group I'],
+  ['1st place Group A', 'Best 3rd-placed team (Groups C/E/F/H/I)'],
+  ['1st place Group L', 'Best 3rd-placed team (Groups E/H/I/J/K)'],
+  ['1st place Group D', 'Best 3rd-placed team (Groups B/E/F/I/J)'],
+  ['1st place Group G', 'Best 3rd-placed team (Groups A/E/H/I/J)'],
+  ['2nd place Group K', '2nd place Group L'],
+  ['1st place Group H', '2nd place Group J'],
+  ['1st place Group B', 'Best 3rd-placed team (Groups E/F/G/I/J)'],
+  ['1st place Group J', '2nd place Group H'],
+  ['1st place Group K', 'Best 3rd-placed team (Groups D/E/I/J/L)'],
+  ['2nd place Group D', '2nd place Group G'],
+];
+
 function isMatchLocked(matchDate) {
   const lockTime = new Date(new Date(matchDate).getTime() - LOCK_HOURS * 60 * 60 * 1000);
   return new Date() >= lockTime;
 }
 
-function KnockoutMatchCard({ match, existingBet, onSave }) {
+function KnockoutMatchCard({ match, existingBet, preview, onSave }) {
   const { addToast } = useToast();
   const [selected, setSelected] = useState(existingBet?.predicted_winner?.id ?? null);
   const [saving,   setSaving]   = useState(false);
-  const locked = isMatchLocked(match.match_date) || match.status === 'FINISHED';
+
+  const home = match.home_team;
+  const away = match.away_team;
+
+  // A pick only makes sense once both bracket slots are filled — until then
+  // there's no team to select, so the card stays locked regardless of timing.
+  const matchupKnown = Boolean(home && away);
+  const locked = !matchupKnown || isMatchLocked(match.match_date) || match.status === 'FINISHED';
 
   async function handlePick(teamId) {
     if (locked) return;
@@ -38,9 +71,6 @@ function KnockoutMatchCard({ match, existingBet, onSave }) {
     }
   }
 
-  const home = match.home_team;
-  const away = match.away_team;
-
   return (
     <div className="ko-bet-card">
       <div className="ko-bet-card__header">
@@ -51,8 +81,18 @@ function KnockoutMatchCard({ match, existingBet, onSave }) {
       </div>
 
       <div className="ko-bet-card__teams">
-        {[home, away].map(team => {
-          if (!team) return <div key="tbd" className="ko-bet-team ko-bet-team--tbd">TBD</div>;
+        {[home, away].map((team, i) => {
+          if (!team) {
+            // Bracket slot not filled yet — show what we already know about who
+            // will land here (e.g. "1st place Group A") instead of a bare "TBD",
+            // and mark it as locked since there's no team to pick yet.
+            return (
+              <div key={`preview-${i}`} className="ko-bet-team ko-bet-team--locked ko-bet-team--preview">
+                <span className="ko-bet-team__lock">🔒</span>
+                <span>{preview?.[i] ?? 'TBD'}</span>
+              </div>
+            );
+          }
           const isSelected = selected === team.id;
           const isWinner   = existingBet?.is_correct === 1 && isSelected;
           const isWrong    = existingBet?.is_correct === 0 && isSelected;
@@ -75,7 +115,9 @@ function KnockoutMatchCard({ match, existingBet, onSave }) {
         })}
       </div>
 
-      {locked && !match.home_team && <p className="ko-bet-card__locked">⏳ Match TBD</p>}
+      {!matchupKnown && (
+        <p className="ko-bet-card__locked">🔒 Picks unlock once this matchup is confirmed</p>
+      )}
     </div>
   );
 }
@@ -113,23 +155,30 @@ function KnockoutBetting() {
         </div>
       )}
 
-      {Object.entries(STAGE_LABELS).map(([stage, label]) => (
-        bracket[stage]?.length > 0 && (
+      {Object.entries(STAGE_LABELS).map(([stage, label]) => {
+        const matches = bracket[stage] ?? [];
+        if (matches.length === 0) return null;
+
+        return (
           <div key={stage} className="ko-stage">
             <h2 className="ko-stage__label">{label}</h2>
             <div className="ko-stage__grid">
-              {bracket[stage].map(match => (
+              {matches.map((match, i) => (
                 <KnockoutMatchCard
                   key={match.id}
                   match={match}
                   existingBet={betsMap[match.id]}
+                  // Only the Round of 32 maps cleanly onto group placements —
+                  // later rounds are "winner of match X", which isn't
+                  // meaningful to show before those matches are played.
+                  preview={stage === 'R32' ? R32_PREVIEWS[i] : null}
                   onSave={onSave}
                 />
               ))}
             </div>
           </div>
-        )
-      ))}
+        );
+      })}
     </div>
   );
 }

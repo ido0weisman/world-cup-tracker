@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../../api/auth.api';
 import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
@@ -7,6 +7,14 @@ import './Auth.css';
 function Login() {
   const { login: setAuth } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // If we got here because ProtectedRoute bounced a guest away from a page
+  // (e.g. /betting), it stashes that page in route state. Send the user
+  // back there after a successful login instead of always going home.
+  const from = location.state?.from
+    ? `${location.state.from.pathname}${location.state.from.search || ''}`
+    : '/';
 
   const [form,    setForm]    = useState({ email: '', password: '' });
   const [error,   setError]   = useState('');
@@ -23,9 +31,16 @@ function Login() {
     try {
       const { token, user } = await login(form);
       setAuth(token, user);
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed.');
+      // err.response is only present when the server actually responded.
+      // If it's missing, the request never reached the server — show a
+      // clearer message for that case instead of a generic "Login failed."
+      if (err.response) {
+        setError(err.response.data?.error || 'Login failed. Please try again.');
+      } else {
+        setError("Couldn't reach the server. Check your connection and try again.");
+      }
     } finally {
       setLoading(false);
     }

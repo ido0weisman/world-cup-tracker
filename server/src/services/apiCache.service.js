@@ -13,6 +13,21 @@ const apiClient = axios.create({
   headers: { 'X-Auth-Token': API_KEY },
 });
 
+// ─── Display-name overrides ───────────────────────────────────────────────────
+// football-data.org returns some teams under their full formal names, which
+// are too long for the compact group-table layout (e.g. truncating into
+// near-illegible columns). Rather than truncate at render time, we shorten
+// the few known long outliers right when they're cached — this keeps the
+// data layer as the single source of truth and survives the 20-min refresh.
+const TEAM_NAME_OVERRIDES = {
+  'Bosnia and Herzegovina': 'Bosnia',
+  'Bosnia-Herzegovina':     'Bosnia',
+};
+
+function shortenTeamName(name) {
+  return TEAM_NAME_OVERRIDES[name] || name;
+}
+
 // ─── Core fetch & upsert logic ────────────────────────────────────────────────
 
 async function fetchAndCacheMatches() {
@@ -109,10 +124,10 @@ function upsertMatches(matches) {
   runInTransaction(() => {
     for (const m of matches) {
       if (m.homeTeam?.tla) {
-        upsertTeam.run(m.homeTeam.name, m.homeTeam.tla, m.homeTeam.crest || null, m.group || 'KNOCKOUT');
+        upsertTeam.run(shortenTeamName(m.homeTeam.name), m.homeTeam.tla, m.homeTeam.crest || null, m.group || 'KNOCKOUT');
       }
       if (m.awayTeam?.tla) {
-        upsertTeam.run(m.awayTeam.name, m.awayTeam.tla, m.awayTeam.crest || null, m.group || 'KNOCKOUT');
+        upsertTeam.run(shortenTeamName(m.awayTeam.name), m.awayTeam.tla, m.awayTeam.crest || null, m.group || 'KNOCKOUT');
       }
 
       const homeId = m.homeTeam?.tla ? getTeamId.get(m.homeTeam.tla)?.id : null;
@@ -189,10 +204,14 @@ function upsertStandings(standings) {
 function normalizeStage(apiStage) {
   const map = {
     'GROUP_STAGE':    'GROUP',
-    'ROUND_OF_32':    'R32',
+    // football-data.org's actual World Cup 2026 stage codes (48-team format)
+    'LAST_32':        'R32',
+    'ROUND_OF_32':    'R32',   // kept as a fallback alias, just in case
     'LAST_16':        'R16',
+    'ROUND_OF_16':    'R16',
     'QUARTER_FINALS': 'QF',
     'SEMI_FINALS':    'SF',
+    'THIRD_PLACE':    'THIRD_PLACE',
     'FINAL':          'FINAL',
   };
   return map[apiStage] || apiStage;

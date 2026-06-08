@@ -27,12 +27,17 @@ function GroupTable({ group }) {
         <tbody>
           {group.standings.map((row, i) => (
             <tr key={row.team.id} className={i < 2 ? 'group-table__row--advance' : ''}>
-              <td>{row.position ?? i + 1}</td>
+              {/* Show the row's position in the rendered table (1, 2, 3, 4),
+                  not the API's stored `position` field — that field can be
+                  stale/out of sync with the sort order the rows are actually
+                  displayed in, which produced the "scrambled" ranks (e.g.
+                  2, 3, 4, 1). The index always matches what's on screen. */}
+              <td>{i + 1}</td>
               <td className="group-table__team-cell">
                 {row.team.flag_url && (
                   <img src={row.team.flag_url} alt={row.team.name} className="group-table__flag" />
                 )}
-                <span>{row.team.name}</span>
+                <span title={row.team.name}>{row.team.name}</span>
               </td>
               <td>{row.played}</td>
               <td>{row.won}</td>

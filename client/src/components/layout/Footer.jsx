@@ -6,8 +6,8 @@ function Footer() {
         <p className="footer__disclaimer">Independent fan project — not affiliated with or endorsed by FIFA. Names &amp; logos belong to their respective owners.</p>
       </div>
       <div className="footer__links">
-        <a href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
-        <a href="https://linkedin.com/" target="_blank" rel="noreferrer">LinkedIn</a>
+        <a href="https://github.com/ido0weisman" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://www.linkedin.com/in/ido-weisman" target="_blank" rel="noreferrer">LinkedIn</a>
       </div>
     </footer>
   );

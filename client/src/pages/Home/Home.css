@@ -12,12 +12,21 @@
   inset: 0;
   display: flex;
   flex-wrap: wrap;
-  align-content: flex-start;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
   gap: 14px;
   padding: 1.25rem;
   opacity: 0.22;
   pointer-events: none;
   overflow: hidden;
+
+  /* The centered flag grid is taller than the hero, so the top/bottom rows
+     get clipped by overflow:hidden. Rather than fight the sizing math, fade
+     those edges out smoothly with a mask so the clipping reads as an
+     intentional vignette instead of a hard cut-off line. */
+  mask-image: linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%);
 }
 
 .home__flag-item {

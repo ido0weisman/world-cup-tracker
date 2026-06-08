@@ -107,6 +107,11 @@ function runMigrations() {
     db.exec('ALTER TABLE users ADD COLUMN country TEXT');
   }
 
+  // V3 fix: earlier runs stored the raw API stage code 'LAST_32' instead of
+  // normalizing it to 'R32' (a mapping bug in apiCache.service — now fixed).
+  // Normalize any rows written before the fix so the bracket displays correctly.
+  db.exec(`UPDATE matches SET stage = 'R32' WHERE stage = 'LAST_32'`);
+
   // Stores open-ended tournament outcomes (e.g. actual top scorer).
   // Using a key-value structure keeps it flexible for future result types.
   db.exec(`

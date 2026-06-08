@@ -10,16 +10,19 @@ function formatMatch(row) {
     status:     row.status,
     home_score: row.home_score,
     away_score: row.away_score,
-    home_team: {
+    // Bracket slots aren't filled until the previous round finishes — return
+    // null (not an empty-but-truthy object) so the frontend can render a
+    // proper "TBD" / "not yet determined" state instead of a blank card.
+    home_team: row.home_team_id ? {
       name:       row.home_team_name,
       short_code: row.home_team_code,
       flag_url:   row.home_team_flag,
-    },
-    away_team: {
+    } : null,
+    away_team: row.away_team_id ? {
       name:       row.away_team_name,
       short_code: row.away_team_code,
       flag_url:   row.away_team_flag,
-    },
+    } : null,
   };
 }
 

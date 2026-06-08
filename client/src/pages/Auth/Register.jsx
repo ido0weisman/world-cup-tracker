@@ -68,7 +68,15 @@ function Register() {
       setAuth(token, user);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed.');
+      // err.response is only present when the server actually responded
+      // (e.g. 409 "account already exists"). If it's missing, the request
+      // never reached the server — show a clearer message for that case
+      // instead of the generic "Registration failed."
+      if (err.response) {
+        setError(err.response.data?.error || 'Registration failed. Please try again.');
+      } else {
+        setError("Couldn't reach the server. Check your connection and try again.");
+      }
     } finally {
       setLoading(false);
     }

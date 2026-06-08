@@ -12,7 +12,6 @@ const BG_IMAGES = [
   // ── Stadiums (WC 2026 venues + historic) ────────────────────────────────
   `${TH}/5/5e/Luzhniki_Stadium,_2018_FIFA_World_Cup.jpg/1280px-Luzhniki_Stadium,_2018_FIFA_World_Cup.jpg`,
   `${TH}/0/04/Metlife_stadium_%28Aerial_view%29.jpg/1280px-Metlife_stadium_%28Aerial_view%29.jpg`,
-  `${TH}/9/94/ATT_Stadium_Interior.jpg/1280px-ATT_Stadium_Interior.jpg`,
   `${TH}/0/04/Estadio_azteca_-_panoramio.jpg/1280px-Estadio_azteca_-_panoramio.jpg`,
   // ── 2026 WC anticipation ─────────────────────────────────────────────────
   `${TH}/d/d2/First_game_of_the_2010_FIFA_World_Cup%2C_South_Africa_vs_Mexico3.jpg/1280px-First_game_of_the_2010_FIFA_World_Cup%2C_South_Africa_vs_Mexico3.jpg`,
