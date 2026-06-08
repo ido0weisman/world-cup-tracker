@@ -161,3 +161,17 @@
   font-weight: 800;
   color: var(--color-gold);
 }
+
+/* Bracket slot not yet filled — shows a "1st place Group A"-style label
+   instead of a bare "TBD", matching the Knockout Betting page. */
+.ko-match__team--preview {
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.ko-match__lock {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  flex-shrink: 0;
+}

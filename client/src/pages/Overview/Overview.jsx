@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useFetch } from '../../hooks/useFetch';
 import { getAllGroups } from '../../api/groups.api';
 import { getKnockoutBracket } from '../../api/knockout.api';
+import { getMatchPreview } from '../../utils/knockoutPreviews';
 import Spinner from '../../components/ui/Spinner';
 import './Overview.css';
 
@@ -72,19 +73,34 @@ function GroupStage() {
 
 const STAGE_LABELS = { R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter Finals', SF: 'Semi Finals', FINAL: 'Final' };
 
-function KnockoutMatch({ match }) {
+function KnockoutMatch({ match, preview }) {
+  const slots = [
+    { team: match.home_team, score: match.home_score, previewLabel: preview?.[0] },
+    { team: match.away_team, score: match.away_score, previewLabel: preview?.[1] },
+  ];
+
   return (
     <div className="ko-match">
-      <div className="ko-match__team">
-        {match.home_team?.flag_url && <img src={match.home_team.flag_url} alt="" className="ko-match__flag" />}
-        <span>{match.home_team?.name ?? 'TBD'}</span>
-        {match.status === 'FINISHED' && <span className="ko-match__score">{match.home_score}</span>}
-      </div>
-      <div className="ko-match__team">
-        {match.away_team?.flag_url && <img src={match.away_team.flag_url} alt="" className="ko-match__flag" />}
-        <span>{match.away_team?.name ?? 'TBD'}</span>
-        {match.status === 'FINISHED' && <span className="ko-match__score">{match.away_score}</span>}
-      </div>
+      {slots.map(({ team, score, previewLabel }, i) => {
+        if (!team) {
+          // Bracket slot not filled yet — show what we already know about who
+          // will land here (e.g. "1st place Group A") instead of a bare "TBD",
+          // mirroring the labels shown on the Knockout Betting page.
+          return (
+            <div key={`preview-${i}`} className="ko-match__team ko-match__team--preview">
+              <span className="ko-match__lock">🔒</span>
+              <span>{previewLabel ?? 'TBD'}</span>
+            </div>
+          );
+        }
+        return (
+          <div key={team.id} className="ko-match__team">
+            {team.flag_url && <img src={team.flag_url} alt="" className="ko-match__flag" />}
+            <span>{team.name}</span>
+            {match.status === 'FINISHED' && <span className="ko-match__score">{score}</span>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -114,8 +130,8 @@ function KnockoutStage() {
           <div key={stage} className="ko-round">
             <h3 className="ko-round__label">{label}</h3>
             <div className="ko-round__matches">
-              {bracket[stage].map(match => (
-                <KnockoutMatch key={match.id} match={match} />
+              {bracket[stage].map((match, i) => (
+                <KnockoutMatch key={match.id} match={match} preview={getMatchPreview(stage, i)} />
               ))}
             </div>
           </div>

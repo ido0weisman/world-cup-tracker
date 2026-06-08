@@ -11,8 +11,21 @@ const NAV_TILES = [
   { to: '/betting',  icon: '🎯',  title: 'Betting Hub',       desc: 'Make your predictions & check the leaderboard' },
 ];
 
-// Calculates the largest flag size (3:2 ratio) that fits all `count` flags
-// within the available viewport area, trying every column count.
+// Fixed number of flags per row in the decorative wall. Using a fixed count
+// (rather than searching for whichever column count yields the biggest flag,
+// like the old version did) guarantees the size we compute here matches the
+// column count the actual flex-wrap layout settles on — that mismatch was
+// exactly what made the grid taller than the visible area, with the extra
+// rows clipped by overflow:hidden and faded by the mask gradient.
+const FLAG_WALL_COLUMNS = 6;
+
+// These teams are left out of the decorative flag wall so the remaining count
+// (42) divides evenly into FLAG_WALL_COLUMNS — a full 6×7 grid with no ragged
+// partial row at the bottom.
+const FLAG_WALL_EXCLUDED_TEAMS = ['Iran', 'Egypt', 'Iraq', 'Jordan', 'Tunisia', 'Saudi Arabia'];
+
+// Calculates the largest flag size (3:2 ratio) that fits `count` flags
+// arranged in a FLAG_WALL_COLUMNS-wide grid within the available viewport area.
 function calcFlagSize(count) {
   if (count === 0) return { width: 100, height: 67 };
   const GAP    = 10;
@@ -23,18 +36,14 @@ function calcFlagSize(count) {
   const availW = window.innerWidth  - PAD_H;
   const availH = window.innerHeight - HDR - FTR - PAD_V;
 
-  let bestFW = 60; // minimum floor
-  for (let c = 4; c <= count; c++) {
-    const r  = Math.ceil(count / c);
-    const fw = (availW - (c - 1) * GAP) / c;          // max width at c columns
-    const fh = (availH - (r - 1) * GAP) / r;          // max height at r rows
-    // Flag ratio is 3:2 → fw = 1.5 * fh
-    const size = Math.min(fw, fh * 1.5);
-    if (size > bestFW) bestFW = size;
-  }
-  const fw = Math.floor(bestFW);
-  const fh = Math.floor(fw * 2 / 3);
-  return { width: fw, height: fh };
+  const cols = FLAG_WALL_COLUMNS;
+  const rows = Math.ceil(count / cols);
+  const fw   = (availW - (cols - 1) * GAP) / cols;   // max width at `cols` columns
+  const fh   = (availH - (rows - 1) * GAP) / rows;   // max height at `rows` rows
+  // Flag ratio is 3:2 → fw = 1.5 * fh
+  const width  = Math.max(60, Math.floor(Math.min(fw, fh * 1.5)));
+  const height = Math.floor(width * 2 / 3);
+  return { width, height };
 }
 
 function Home() {
@@ -42,16 +51,17 @@ function Home() {
   const { data } = useFetch(getAllGroups);
 
   const allTeams = data?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [];
+  const flagWallTeams = allTeams.filter(team => !FLAG_WALL_EXCLUDED_TEAMS.includes(team.name));
 
   // Recalculate whenever the number of teams changes (data load)
-  const flagSize = useMemo(() => calcFlagSize(allTeams.length), [allTeams.length]);
+  const flagSize = useMemo(() => calcFlagSize(flagWallTeams.length), [flagWallTeams.length]);
 
   return (
     <div className="home">
       {/* Decorative flag wall — one flag per team, sized to fill the viewport */}
-      {allTeams.length > 0 && (
+      {flagWallTeams.length > 0 && (
         <div className="home__flag-wall">
-          {allTeams.map((team, i) => (
+          {flagWallTeams.map((team, i) => (
             team.flag_url && (
               <img
                 key={i}
