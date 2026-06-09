@@ -3,12 +3,14 @@ import { getMatchesToday } from '../../api/matches.api';
 import MatchCard from '../../components/ui/MatchCard';
 import { MatchCardSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../context/AuthContext';
+import { useFavouriteMatches } from '../../hooks/useFavouriteMatches';
 import { getTimezoneForCountry, MATCH_LOCALE } from '../../utils/timezone';
 import './MatchesToday.css';
 
 function MatchesToday() {
   const { data, loading, error } = useFetch(getMatchesToday);
   const { user } = useAuth();
+  const { toggle, isFavourite } = useFavouriteMatches();
   const timezone = getTimezoneForCountry(user?.country);
   const tzOpts = timezone ? { timeZone: timezone } : {};
 
@@ -31,7 +33,14 @@ function MatchesToday() {
       <div className="matches-grid">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <MatchCardSkeleton key={i} />)
-          : data?.matches?.map(match => <MatchCard key={match.id} match={match} />)
+          : data?.matches?.map(match => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                isFavourite={isFavourite(match.id)}
+                onToggle={toggle}
+              />
+            ))
         }
       </div>
     </div>

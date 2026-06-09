@@ -78,7 +78,7 @@ function formatDate(utcString, timezone) {
   };
 }
 
-function MatchCard({ match }) {
+function MatchCard({ match, isFavourite = false, onToggle }) {
   const { user } = useAuth();
   const timezone = getTimezoneForCountry(user?.country);
   const { date, time } = formatDate(match.match_date, timezone);
@@ -87,8 +87,17 @@ function MatchCard({ match }) {
   const home = match.home_team;
   const away = match.away_team;
 
+  function handleCardClick() {
+    onToggle?.(match.id);
+  }
+
   return (
-    <div className="match-card">
+    <div
+      className={`match-card${isFavourite ? ' match-card--favourite' : ''}`}
+      onClick={handleCardClick}
+      style={{ cursor: onToggle ? 'pointer' : 'default' }}
+    >
+      {isFavourite && <span className="match-card__fav-badge">⭐</span>}
       <div className="match-card__header">
         <span className="match-card__stage">{match.stage}</span>
         <StatusBadge status={match.status} />
@@ -131,7 +140,7 @@ function MatchCard({ match }) {
             target="_blank"
             rel="noopener noreferrer"
             className="match-card__cal-btn"
-            onClick={e => e.stopPropagation()}
+            onClick={e => e.stopPropagation()} // prevent favourite toggle when clicking calendar
           >
             🗓️ Add to Calendar
           </a>

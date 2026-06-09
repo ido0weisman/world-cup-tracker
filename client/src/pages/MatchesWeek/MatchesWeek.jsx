@@ -4,6 +4,7 @@ import { getMatchesThisWeek, getAllMatches } from '../../api/matches.api';
 import MatchCard from '../../components/ui/MatchCard';
 import Spinner from '../../components/ui/Spinner';
 import { useAuth } from '../../context/AuthContext';
+import { useFavouriteMatches } from '../../hooks/useFavouriteMatches';
 import { getTimezoneForCountry, MATCH_LOCALE } from '../../utils/timezone';
 import '../../pages/MatchesToday/MatchesToday.css';
 
@@ -46,6 +47,7 @@ function MatchesWeek() {
     [showAll]
   );
   const { user } = useAuth();
+  const { toggle, isFavourite } = useFavouriteMatches();
   const timezone = getTimezoneForCountry(user?.country);
 
   const grouped = data?.matches ? groupByDate(data.matches, timezone) : {};
@@ -96,7 +98,14 @@ function MatchesWeek() {
             {day}
           </h2>
           <div className="matches-grid">
-            {matches.map(match => <MatchCard key={match.id} match={match} />)}
+            {matches.map(match => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                isFavourite={isFavourite(match.id)}
+                onToggle={toggle}
+              />
+            ))}
           </div>
         </div>
       ))}

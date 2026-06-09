@@ -17,12 +17,8 @@ const NAV_TILES = [
 // column count the actual flex-wrap layout settles on — that mismatch was
 // exactly what made the grid taller than the visible area, with the extra
 // rows clipped by overflow:hidden and faded by the mask gradient.
+// All 48 WC2026 teams are shown — 48 divides evenly into 6×8, no exclusions needed.
 const FLAG_WALL_COLUMNS = 6;
-
-// These teams are left out of the decorative flag wall so the remaining count
-// (42) divides evenly into FLAG_WALL_COLUMNS — a full 6×7 grid with no ragged
-// partial row at the bottom.
-const FLAG_WALL_EXCLUDED_TEAMS = ['Iran', 'Egypt', 'Iraq', 'Jordan', 'Tunisia', 'Saudi Arabia'];
 
 // Calculates the largest flag size (3:2 ratio) that fits `count` flags
 // arranged in a FLAG_WALL_COLUMNS-wide grid within the available viewport area.
@@ -50,8 +46,7 @@ function Home() {
   const navigate = useNavigate();
   const { data } = useFetch(getAllGroups);
 
-  const allTeams = data?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [];
-  const flagWallTeams = allTeams.filter(team => !FLAG_WALL_EXCLUDED_TEAMS.includes(team.name));
+  const flagWallTeams = data?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [];
 
   // Recalculate whenever the number of teams changes (data load)
   const flagSize = useMemo(() => calcFlagSize(flagWallTeams.length), [flagWallTeams.length]);

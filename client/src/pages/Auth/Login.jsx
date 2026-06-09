@@ -71,6 +71,12 @@ function Login() {
         <p className="auth-card__switch">
           Don't have an account? <Link to="/register">Sign up</Link>
         </p>
+        <p className="auth-card__switch" style={{ marginTop: '0.5rem' }}>
+          Forgot your password?{' '}
+          <a href="https://www.linkedin.com/messaging/compose/?recipient=ido-weisman" target="_blank" rel="noreferrer">
+            Message me on LinkedIn
+          </a>
+        </p>
       </div>
     </div>
   );
