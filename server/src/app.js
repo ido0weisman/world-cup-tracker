@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 
 const runMigrations = require('./db/migrate');
 const { initCacheService } = require('./services/apiCache.service');
+const { initOracleCron }   = require('./services/groqOracle.service');
 const errorHandler = require('./middleware/error.middleware');
 const authRoutes     = require('./modules/auth/auth.routes');
 const matchesRoutes  = require('./modules/matches/matches.routes');
@@ -14,6 +15,7 @@ const knockoutRoutes = require('./modules/knockout/knockout.routes');
 const betsRoutes     = require('./modules/bets/bets.routes');
 const adminRoutes    = require('./modules/bets/admin.routes');
 const squadsRoutes   = require('./modules/squads/squads.routes');
+const oracleRoutes   = require('./modules/oracle/oracle.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +67,7 @@ app.use('/api/knockout', knockoutRoutes);
 app.use('/api/bets',    betsRoutes);
 app.use('/api/admin',   adminRoutes);
 app.use('/api/squads',  squadsRoutes);
+app.use('/api/oracle',  oracleRoutes);
 
 // ─── Production: serve the built React app ──────────────────────────────────
 // In production Express also serves the Vite build output — one server, one
@@ -89,7 +92,10 @@ async function start() {
   // 2. Fetch initial data and start the 20-min polling cycle
   await initCacheService();
 
-  // 3. Start listening for requests
+  // 3. Start Oracle cron — fetches daily predictions for today's matches
+  initOracleCron();
+
+  // 4. Start listening for requests
   app.listen(PORT, () => {
     console.log(`[Server] Running on http://localhost:${PORT}`);
   });

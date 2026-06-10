@@ -3,6 +3,7 @@ import GroupBetting from './GroupBetting';
 import KnockoutBetting from './KnockoutBetting';
 import TopScorer from './TopScorer';
 import Leaderboard from './Leaderboard';
+import OracleDuel from './OracleDuel';
 import './Betting.css';
 
 const TILES = [
@@ -33,6 +34,13 @@ const TILES = [
     title:   'Leaderboard',
     desc:    'See the top 25 predictors and where you rank.',
     color:   '#5a1a6b',
+  },
+  {
+    path:    'oracle',
+    icon:    '🔮',
+    title:   'Oracle Duel',
+    desc:    'Build your own Oracle and battle an AI. Who sees the future?',
+    color:   '#2d1a6b',
   },
 ];
 
@@ -70,6 +78,7 @@ function Betting() {
       <Route path="knockout"    element={<KnockoutBetting />} />
       <Route path="top-scorer"  element={<TopScorer />} />
       <Route path="leaderboard" element={<Leaderboard />} />
+      <Route path="oracle/*"    element={<OracleDuel />} />
     </Routes>
   );
 }

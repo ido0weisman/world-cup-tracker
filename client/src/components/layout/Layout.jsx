@@ -56,13 +56,15 @@ function Layout() {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
-  const isHome = location.pathname === '/';
+  const isHome   = location.pathname === '/';
+  const isOracle = location.pathname.startsWith('/betting/oracle');
 
   return (
     <div className="app-shell">
-      {/* On the home page, show only the navy background (flags handle the visual).
-          On all other pages, show the rotating World Cup photo. */}
-      {!isHome && (
+      {/* Home: flags handle the visual — no photo layer.
+          Oracle: deep cinematic dark background — no photo layer.
+          All other pages: rotating World Cup photo. */}
+      {!isHome && !isOracle && (
         <>
           <div
             className="app-bg-photo"
@@ -71,6 +73,7 @@ function Layout() {
           <div className="app-bg-overlay" />
         </>
       )}
+      {isOracle && <div className="app-bg-oracle" />}
       <Header />
       <main className="main-content">
         <Outlet />

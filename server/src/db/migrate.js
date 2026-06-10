@@ -122,6 +122,63 @@ function runMigrations() {
     );
   `);
 
+  // ── V4 additions: match_odds + Oracle Duel tables ─────────────────────────
+  // Each table is created with IF NOT EXISTS so this is safe to run repeatedly.
+
+  db.exec(`
+    -- Optional bookmaker odds per match — populated by The Odds API integration.
+    -- The algorithm Oracle uses these when available; falls back gracefully if absent.
+    CREATE TABLE IF NOT EXISTS match_odds (
+      match_id    INTEGER  PRIMARY KEY REFERENCES matches(id),
+      home_prob   REAL     NOT NULL,
+      away_prob   REAL     NOT NULL,
+      fetched_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Stores the user's current Oracle card choices (3 cards = 1 profile).
+    -- INSERT OR REPLACE means rebuilding overwrites the previous setup cleanly.
+    CREATE TABLE IF NOT EXISTS oracle_profiles (
+      user_id       INTEGER  PRIMARY KEY REFERENCES users(id),
+      strength_card TEXT     NOT NULL,
+      market_card   TEXT     NOT NULL,
+      upset_card    TEXT     NOT NULL,
+      oracle_name   TEXT     NOT NULL,
+      updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Stores both Oracle predictions per match, fetched once daily.
+    -- algorithm_* is computed by our own service; ai_* comes from Groq.
+    -- ai columns are nullable — if Groq is unavailable that day, the page
+    -- still works using only the algorithm prediction.
+    CREATE TABLE IF NOT EXISTS oracle_predictions (
+      match_id             INTEGER  PRIMARY KEY REFERENCES matches(id),
+      algorithm_home_prob  REAL     NOT NULL,
+      algorithm_away_prob  REAL     NOT NULL,
+      ai_home_prob         REAL,
+      ai_away_prob         REAL,
+      fetched_at           DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Stores each user's Oracle bet with a snapshot of the Oracle probabilities
+    -- at the time of betting — so changing your Oracle later doesn't affect
+    -- how past bets were scored.
+    CREATE TABLE IF NOT EXISTS oracle_bets (
+      id                   INTEGER  PRIMARY KEY AUTOINCREMENT,
+      user_id              INTEGER  NOT NULL REFERENCES users(id),
+      match_id             INTEGER  NOT NULL REFERENCES matches(id),
+      picked_winner_id     INTEGER  NOT NULL REFERENCES teams(id),
+      sided_with           TEXT     NOT NULL CHECK(sided_with IN ('algorithm','ai','both','neither')),
+      algorithm_home_prob  REAL     NOT NULL,
+      algorithm_away_prob  REAL     NOT NULL,
+      ai_home_prob         REAL,
+      ai_away_prob         REAL,
+      is_correct           INTEGER,
+      points_awarded       INTEGER  DEFAULT 0,
+      submitted_at         DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, match_id)
+    );
+  `);
+
   console.log('[DB] Migrations complete.');
 }
 

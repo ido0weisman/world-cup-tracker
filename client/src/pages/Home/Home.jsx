@@ -5,10 +5,11 @@ import { getAllGroups } from '../../api/groups.api';
 import './Home.css';
 
 const NAV_TILES = [
-  { to: '/today',    icon: '🗓️',  title: "Today's Matches",  desc: 'Live scores & today\'s schedule'  },
-  { to: '/week',     icon: '📅',  title: 'Schedule',          desc: 'This week\'s matches — or browse the full tournament schedule' },
-  { to: '/overview', icon: '📊',  title: 'Overview',          desc: 'Group tables & knockout bracket'  },
-  { to: '/betting',  icon: '🎯',  title: 'Betting Hub',       desc: 'Make your predictions & check the leaderboard' },
+  { to: '/today',           icon: '🗓️',  title: "Today's Matches",  desc: 'Live scores & today\'s schedule'  },
+  { to: '/week',            icon: '📅',  title: 'Schedule',          desc: 'This week\'s matches — or browse the full tournament schedule' },
+  { to: '/overview',        icon: '📊',  title: 'Overview',          desc: 'Group tables & knockout bracket'  },
+  { to: '/betting',         icon: '🎯',  title: 'Betting Hub',       desc: 'Make your predictions & check the leaderboard' },
+  { to: '/betting/oracle',  icon: '🔮',  title: 'Oracle Duel',       desc: 'Two Oracles. One truth. Who sees the future?' },
 ];
 
 // Fixed number of flags per row in the decorative wall. Using a fixed count

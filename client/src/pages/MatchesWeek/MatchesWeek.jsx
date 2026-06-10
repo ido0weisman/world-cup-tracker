@@ -1,23 +1,26 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useFetch } from '../../hooks/useFetch';
-import { getMatchesThisWeek, getAllMatches } from '../../api/matches.api';
+import { getAllMatches } from '../../api/matches.api';
 import MatchCard from '../../components/ui/MatchCard';
 import Spinner from '../../components/ui/Spinner';
 import { useAuth } from '../../context/AuthContext';
 import { useFavouriteMatches } from '../../hooks/useFavouriteMatches';
 import { getTimezoneForCountry, MATCH_LOCALE } from '../../utils/timezone';
+import './MatchesWeek.css';
 import '../../pages/MatchesToday/MatchesToday.css';
+
+const TABS = [
+  { id: 'week',     label: '📅 This Week'           },
+  { id: 'schedule', label: '🌍 Tournament Schedule'  },
+  { id: 'played',   label: '✅ Games Played'         },
+];
 
 const STAGE_LABELS = {
   GROUP: 'Group Stage', R32: 'Round of 32', R16: 'Round of 16',
-  QF: 'Quarter Finals', SF: 'Semi Finals', FINAL: 'Final',
+  QF: 'Quarter Finals', SF: 'Semi Finals',  FINAL: 'Final',
 };
 const STAGE_ORDER = ['GROUP', 'R32', 'R16', 'QF', 'SF', 'FINAL'];
 
-// Summarizes which tournament stage(s) the currently displayed matches belong
-// to, e.g. "Group Stage" or "Group Stage · Round of 32" if a week straddles
-// the transition between stages — gives context the per-card stage tag alone
-// doesn't (you'd have to scan every card to notice a mix).
 function describeStages(matches) {
   if (!matches?.length) return null;
   const present = new Set(matches.map(m => m.stage));
@@ -25,11 +28,9 @@ function describeStages(matches) {
   return ordered.map(s => STAGE_LABELS[s] ?? s).join(' · ');
 }
 
-// Groups matches by their local date string for the "by day" layout,
-// respecting the user's registered country timezone.
-function groupByDate(matches, timezone) {
+function groupByDate(matches, timezone, reverse = false) {
   const tzOpts = timezone ? { timeZone: timezone } : {};
-  return matches.reduce((acc, match) => {
+  const grouped = matches.reduce((acc, match) => {
     const day = new Date(match.match_date).toLocaleDateString(MATCH_LOCALE, {
       weekday: 'long', day: 'numeric', month: 'long', ...tzOpts,
     });
@@ -37,66 +38,84 @@ function groupByDate(matches, timezone) {
     acc[day].push(match);
     return acc;
   }, {});
+
+  // Played tab: reverse so most recent results appear at the top
+  return reverse ? Object.fromEntries(Object.entries(grouped).reverse()) : grouped;
 }
 
 function MatchesWeek() {
-  const [showAll, setShowAll] = useState(false);
+  const [activeTab, setActiveTab] = useState('week');
 
-  const { data, loading, error } = useFetch(
-    showAll ? getAllMatches : getMatchesThisWeek,
-    [showAll]
-  );
+  const { data, loading, error } = useFetch(getAllMatches, []);
   const { user } = useAuth();
   const { toggle, isFavourite } = useFavouriteMatches();
   const timezone = getTimezoneForCountry(user?.country);
 
-  const grouped = data?.matches ? groupByDate(data.matches, timezone) : {};
-  const matchCount = data?.matches?.length ?? 0;
-  const stagesLabel = describeStages(data?.matches);
+  const { week, schedule, played } = useMemo(() => {
+    const all = data?.matches ?? [];
+    const now         = Date.now();
+    const weekFromNow = now + 7 * 24 * 60 * 60 * 1000;
+
+    return {
+      // This week: non-finished matches kicking off within the next 7 days
+      week:     all.filter(m => m.status !== 'FINISHED' && new Date(m.match_date).getTime() <= weekFromNow),
+      // Full schedule: all non-finished matches
+      schedule: all.filter(m => m.status !== 'FINISHED'),
+      // Played: all finished matches
+      played:   all.filter(m => m.status === 'FINISHED'),
+    };
+  }, [data]);
+
+  const COUNTS = { week: week.length, schedule: schedule.length, played: played.length };
+
+  const activeMatches = { week, schedule, played }[activeTab];
+  const grouped       = groupByDate(activeMatches, timezone, activeTab === 'played');
+  const stagesLabel   = describeStages(activeMatches);
+
+  const emptyMessages = {
+    week:     { icon: '📅', text: 'No matches scheduled this week.' },
+    schedule: { icon: '📅', text: 'No upcoming matches.'            },
+    played:   { icon: '⏳', text: 'No matches played yet.'          },
+  };
 
   return (
     <div className="matches-page">
-      <h1 className="matches-page__title">
-        {showAll ? '🌍 Full Tournament Schedule' : "This Week's Matches"}
-      </h1>
-      <p className="matches-page__sub">
-        {showAll
-          ? `Every match of the 2026 World Cup${matchCount ? ` — all ${matchCount} games` : ''}`
-          : 'Next 7 days'}
-      </p>
+      <h1 className="matches-page__title">Schedule</h1>
+      <p className="matches-page__sub">All 104 matches of the 2026 World Cup</p>
 
-      {/* Tells the viewer at a glance which stage(s) of the tournament these
-          matches belong to (e.g. Group Stage, or Group Stage · Round of 32
-          for a week that straddles the transition) — without it you'd have
-          to read every card's small stage tag to piece that together. */}
+      <div className="schedule-tabs">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            className={`schedule-tab ${activeTab === tab.id ? 'schedule-tab--active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+            {!loading && (
+              <span className="schedule-tab__count">{COUNTS[tab.id]}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {stagesLabel && (
         <p className="matches-page__stage-badge">🏆 {stagesLabel}</p>
       )}
 
-      <button
-        type="button"
-        className="btn btn--outline"
-        onClick={() => setShowAll(s => !s)}
-        style={{ marginBottom: '1.75rem' }}
-      >
-        {showAll ? '📅 Back to This Week' : '🌍 Show the entire tournament schedule (all matches)'}
-      </button>
-
-      {loading && <Spinner message={showAll ? 'Loading the full tournament schedule…' : "Loading this week's matches…"} />}
+      {loading && <Spinner message="Loading matches…" />}
       {error   && <p className="matches-page__error">{error}</p>}
 
-      {!loading && !error && matchCount === 0 && (
+      {!loading && !error && activeMatches.length === 0 && (
         <div className="matches-page__empty">
-          <span>📅</span>
-          <p>{showAll ? 'No matches found.' : 'No matches scheduled this week.'}</p>
+          <span>{emptyMessages[activeTab].icon}</span>
+          <p>{emptyMessages[activeTab].text}</p>
         </div>
       )}
 
       {Object.entries(grouped).map(([day, matches]) => (
         <div key={day} style={{ marginBottom: '2rem' }}>
-          <h2 style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {day}
-          </h2>
+          <h2 className="schedule-day-header">{day}</h2>
           <div className="matches-grid">
             {matches.map(match => (
               <MatchCard

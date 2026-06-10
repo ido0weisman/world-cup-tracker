@@ -78,12 +78,26 @@ function formatDate(utcString, timezone) {
   };
 }
 
+// Returns the status the UI should display.
+// The DB only stores SCHEDULED/LIVE/FINISHED; we don't poll for live updates,
+// so if a match's kickoff was within the last 110 minutes we show LIVE locally.
+function computeDisplayStatus(match) {
+  if (match.status === 'FINISHED' || match.status === 'LIVE') return match.status;
+  if (match.status === 'SCHEDULED' && match.match_date) {
+    const kickoff = new Date(match.match_date).getTime();
+    const now     = Date.now();
+    if (now >= kickoff && now <= kickoff + 110 * 60 * 1000) return 'LIVE';
+  }
+  return match.status;
+}
+
 function MatchCard({ match, isFavourite = false, onToggle }) {
   const { user } = useAuth();
   const timezone = getTimezoneForCountry(user?.country);
   const { date, time } = formatDate(match.match_date, timezone);
-  const isFinished = match.status === 'FINISHED';
-  const location   = getLocation(match.stadium);
+  const displayStatus = computeDisplayStatus(match);
+  const isFinished    = displayStatus === 'FINISHED';
+  const location      = getLocation(match.stadium);
   const home = match.home_team;
   const away = match.away_team;
 
@@ -100,7 +114,7 @@ function MatchCard({ match, isFavourite = false, onToggle }) {
       {isFavourite && <span className="match-card__fav-badge">⭐</span>}
       <div className="match-card__header">
         <span className="match-card__stage">{match.stage}</span>
-        <StatusBadge status={match.status} />
+        <StatusBadge status={displayStatus} />
       </div>
 
       <div className="match-card__body">

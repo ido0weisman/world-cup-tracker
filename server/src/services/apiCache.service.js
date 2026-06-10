@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cron = require('node-cron');
 const db = require('../config/db');
-const { scoreKnockoutPredictions } = require('./scoring.service');
+const { scoreKnockoutPredictions, scoreOracleBets } = require('./scoring.service');
 
 const API_BASE = process.env.FOOTBALL_API_BASE_URL;
 const API_KEY = process.env.FOOTBALL_API_KEY;
@@ -44,6 +44,7 @@ async function fetchAndCacheMatches() {
     upsertMatches(data.matches);
     // Score any newly finished knockout matches immediately after updating
     scoreKnockoutPredictions();
+    scoreOracleBets();
     console.log(`[Cache] Matches updated at ${new Date().toISOString()}`);
   } catch (err) {
     console.error('[Cache] Failed to fetch matches:', err.message);

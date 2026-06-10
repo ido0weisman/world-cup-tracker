@@ -72,6 +72,19 @@ a {
   pointer-events: none;
 }
 
+/* ── Oracle Duel — deep cinematic dark with purple nebula ───────────────────── */
+.app-bg-oracle {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  /* Deep dark navy base + two layered radial glows: purple left, gold right */
+  background:
+    radial-gradient(ellipse 55% 45% at 20% 50%, rgba(139, 92, 246, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 35% at 78% 40%, rgba(245, 197, 24, 0.07) 0%, transparent 60%),
+    linear-gradient(160deg, #05071a 0%, #0a0d2e 40%, #060818 100%);
+  pointer-events: none;
+}
+
 /* ── Header ──────────────────────────────────────────────────────────────────── */
 .header {
   position: relative;
