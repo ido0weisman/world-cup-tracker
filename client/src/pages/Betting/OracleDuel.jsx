@@ -66,8 +66,8 @@ const UPSET_CARDS = [
   },
   {
     value: 'upsets',
-    emoji: '🔥',
-    title: 'Upsets Make The World Cup',
+    emoji: '🐶',
+    title: 'Underdog',
     desc:  'Boost the underdog\'s probability',
   },
   {
