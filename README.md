@@ -1,6 +1,6 @@
-# ⚽ World Cup 2026 Tracker & Betting App
+# ⚽ World Cup 2026 Tracker & Predictions App
 
-A full-stack web application for tracking the FIFA World Cup 2026 — live standings, match schedules, and a prediction/betting game for registered users.
+A full-stack web application for tracking the FIFA World Cup 2026 — live standings, match schedules, and a predictions game for registered users.
 
 ---
 
@@ -8,7 +8,7 @@ A full-stack web application for tracking the FIFA World Cup 2026 — live stand
 
 🔗 **[wc2026-tracker.fly.dev](https://wc2026-tracker.fly.dev/)**
 
-Open the link, register an account, and explore the matches, standings, and betting features — no setup required. (Hosted as a temporary live demo; if it's ever offline, follow **Run It Locally** below to run the full app on your own machine.)
+Open the link, register an account, and explore the matches, standings, and predictions features — no setup required. (Hosted as a temporary live demo; if it's ever offline, follow **Run It Locally** below to run the full app on your own machine.)
 
 ---
 
@@ -43,7 +43,7 @@ Open the link, register an account, and explore the matches, standings, and bett
 - **Group Stage Overview** — All 12 groups with live standings, auto-updated from the API
 - **Knockout Bracket** — Visual bracket that populates as the tournament progresses
 
-### 🎯 Betting Hub
+### 🎯 Predictions Hub
 - **Group Stage Bets** — Predict which two teams advance from each group
 - **Knockout Predictions** — Pick the winner of every match from R32 to the Final
 - **Top Scorer** — Bet on who finishes the tournament as the top goal scorer

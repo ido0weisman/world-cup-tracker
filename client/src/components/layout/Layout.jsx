@@ -2,7 +2,6 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import Header from './Header';
 import Footer from './Footer';
-import FactsBanner from '../ui/FactsBanner';
 
 // Free World Cup photos from Wikimedia Commons — confirmed working from previous project
 const WM = 'https://upload.wikimedia.org/wikipedia/commons';
@@ -78,7 +77,6 @@ function Layout() {
       <main className="main-content">
         <Outlet />
       </main>
-      <FactsBanner />
       <Footer />
     </div>
   );

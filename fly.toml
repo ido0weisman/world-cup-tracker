@@ -7,6 +7,7 @@ app = "wc2026-tracker"
 primary_region = "lhr"   # London — pick whatever's closest to you/your friends
 
 [build]
+  dockerfile = "Dockerfile"
 
 [env]
   NODE_ENV = "production"

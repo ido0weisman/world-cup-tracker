@@ -71,7 +71,7 @@ async function fetchPredictionsForToday() {
     FROM   matches m
     JOIN   teams ht  ON m.home_team_id  = ht.id
     JOIN   teams awt ON m.away_team_id = awt.id
-    WHERE  DATE(m.match_date) = ? AND m.status = 'SCHEDULED'
+    WHERE  DATE(m.match_date) = ? AND m.status IN ('SCHEDULED', 'LIVE')
   `).all(today);
 
   if (!matches.length) {
@@ -117,10 +117,11 @@ async function fetchPredictionsForToday() {
 
 // ─── Cron initialisation ──────────────────────────────────────────────────────
 
-// Schedules the daily fetch at 07:00 UTC and runs it once on startup.
-// node-cron is already in the project's dependencies — no new package needed.
+// Schedules the daily fetch at 06:00 UTC — 10 hours before the earliest WC 2026
+// kickoff (16:00 UTC). This guarantees predictions are ready before any match
+// goes LIVE that day, regardless of time zone or schedule changes.
 function initOracleCron() {
-  cron.schedule('0 7 * * *', () => {
+  cron.schedule('0 6 * * *', () => {
     console.log('[Oracle] Running scheduled daily prediction fetch...');
     fetchPredictionsForToday().catch(err =>
       console.error('[Oracle] Scheduled fetch failed:', err.message)
@@ -132,7 +133,7 @@ function initOracleCron() {
     console.error('[Oracle] Startup fetch failed:', err.message)
   );
 
-  console.log('[Oracle] Cron scheduled — daily predictions at 07:00 UTC.');
+  console.log('[Oracle] Cron scheduled — daily predictions at 06:00 UTC.');
 }
 
 module.exports = { initOracleCron, fetchPredictionsForToday };

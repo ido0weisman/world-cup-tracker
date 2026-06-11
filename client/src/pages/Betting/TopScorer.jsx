@@ -122,7 +122,7 @@ function TopScorer() {
         </div>
       )}
 
-      {locked && <p className="ts-locked">🔒 Betting is now closed.</p>}
+      {locked && <p className="ts-locked">🔒 Predictions are now closed.</p>}
 
       {!locked && (
         <>

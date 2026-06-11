@@ -13,7 +13,7 @@ const NAV_LINKS = [
   { to: '/today',           label: 'Today',        end: false },
   { to: '/week',            label: 'Schedule',     end: false },
   { to: '/overview',        label: 'Overview',     end: false },
-  { to: '/betting',         label: 'Betting',      end: false },
+  { to: '/betting',         label: 'Predictions',  end: false },
   { to: '/betting/oracle',  label: '🔮 Oracle',    end: false },
   { to: '/rules',           label: 'New Rules',    end: false },
 ];

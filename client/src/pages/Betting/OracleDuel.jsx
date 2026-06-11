@@ -80,7 +80,7 @@ const UPSET_CARDS = [
 
 const STEPS = [
   { key: 'strength_card', label: 'How do you judge a team?',          cards: STRENGTH_CARDS },
-  { key: 'market_card',   label: 'Do you trust the betting market?',  cards: MARKET_CARDS   },
+  { key: 'market_card',   label: 'Do you follow the bookmaker odds?',  cards: MARKET_CARDS   },
   { key: 'upset_card',    label: "What's your gut feeling on upsets?", cards: UPSET_CARDS   },
 ];
 
@@ -273,49 +273,36 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
         </div>
       </div>
 
-      {/* Orb row — Algorithm Oracle */}
-      <p className="duel-card__oracle-label">
-        ⚙️ {profile?.oracle_name ?? 'Your Oracle'}
-      </p>
-      <div className="duel-card__orbs">
-        <GlowOrb
-          prob={algoPred.home_prob}
-          color="gold"
-          label={match.home_team_name}
-          flag={match.home_flag}
-        />
-        <div className="duel-card__orb-divider" />
-        <GlowOrb
-          prob={algoPred.away_prob}
-          color="gold"
-          label={match.away_team_name}
-          flag={match.away_flag}
-        />
-      </div>
+      {/* ── Side-by-side Oracle Duel ── */}
+      <div className="duel-card__oracle-cols">
 
-      {/* Orb row — Groq AI Oracle */}
-      {aiPred && (
-        <>
-          <p className="duel-card__oracle-label duel-card__oracle-label--ai">
-            🤖 Groq AI
-          </p>
-          <div className="duel-card__orbs">
-            <GlowOrb
-              prob={aiPred.home_prob}
-              color="purple"
-              label={match.home_team_name}
-              flag={match.home_flag}
-            />
-            <div className="duel-card__orb-divider" />
-            <GlowOrb
-              prob={aiPred.away_prob}
-              color="purple"
-              label={match.away_team_name}
-              flag={match.away_flag}
-            />
-          </div>
-        </>
-      )}
+        {/* Your Oracle — left column */}
+        <div className="duel-card__oracle-col duel-card__oracle-col--algo">
+          <p className="duel-card__col-header">⚙️ {profile?.oracle_name ?? 'Your Oracle'}</p>
+          <GlowOrb prob={algoPred.home_prob} color="gold" label={match.home_team_name} flag={match.home_flag} />
+          <GlowOrb prob={algoPred.away_prob} color="gold" label={match.away_team_name} flag={match.away_flag} />
+        </div>
+
+        {/* VS divider */}
+        <div className="duel-card__col-divider"><span>VS</span></div>
+
+        {/* Groq AI — right column */}
+        <div className="duel-card__oracle-col duel-card__oracle-col--ai">
+          <p className="duel-card__col-header">🤖 Groq AI</p>
+          {aiPred ? (
+            <>
+              <GlowOrb prob={aiPred.home_prob} color="purple" label={match.home_team_name} flag={match.home_flag} />
+              <GlowOrb prob={aiPred.away_prob} color="purple" label={match.away_team_name} flag={match.away_flag} />
+            </>
+          ) : (
+            <div className="duel-card__ai-pending">
+              ⏳ Prediction pending
+              <span>Runs nightly at 22:00 UTC</span>
+            </div>
+          )}
+        </div>
+
+      </div>
 
       {/* Verdict */}
       <p className={`duel-card__verdict ${bothAgree ? 'duel-card__verdict--agree' : 'duel-card__verdict--disagree'}`}>
@@ -383,7 +370,7 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
       )}
 
       {(isLocked && !localBet) && (
-        <p className="duel-card__locked">🔒 Betting closed</p>
+        <p className="duel-card__locked">🔒 Predictions closed</p>
       )}
     </div>
   );
@@ -427,6 +414,130 @@ function AccuracyTracker({ accuracy, profileName }) {
   );
 }
 
+// ─── Info Modal ──────────────────────────────────────────────────────────────
+
+const NAMES_BY_GROUP = [
+  {
+    strength: '🏆 Legacy & Ranking',
+    desc: 'trusts FIFA history & rankings',
+    names: [
+      { market: 'Trusts bookmakers',  upset: 'Backs favourites', name: 'The Banker'         },
+      { market: 'Trusts bookmakers',  upset: 'Backs underdogs',  name: 'The Contrarian'     },
+      { market: 'Trusts bookmakers',  upset: 'Pure data',        name: 'The Conservative'   },
+      { market: 'Ignores bookmakers', upset: 'Backs favourites', name: 'The Purist'         },
+      { market: 'Ignores bookmakers', upset: 'Backs underdogs',  name: 'The Historian'      },
+      { market: 'Ignores bookmakers', upset: 'Pure data',        name: 'The Scholar'        },
+      { market: 'Balanced approach',  upset: 'Backs favourites', name: 'The Veteran'        },
+      { market: 'Balanced approach',  upset: 'Backs underdogs',  name: 'The Maverick'       },
+      { market: 'Balanced approach',  upset: 'Pure data',        name: 'The Traditionalist' },
+    ],
+  },
+  {
+    strength: '⚡ Hot Right Now',
+    desc: 'trusts current tournament form',
+    names: [
+      { market: 'Trusts bookmakers',  upset: 'Backs favourites', name: 'The Pundit'     },
+      { market: 'Trusts bookmakers',  upset: 'Backs underdogs',  name: 'The Gambler'    },
+      { market: 'Trusts bookmakers',  upset: 'Pure data',        name: 'The Speculator' },
+      { market: 'Ignores bookmakers', upset: 'Backs favourites', name: 'The Hawk'       },
+      { market: 'Ignores bookmakers', upset: 'Backs underdogs',  name: 'The Rebel'      },
+      { market: 'Ignores bookmakers', upset: 'Pure data',        name: 'The Instinct'   },
+      { market: 'Balanced approach',  upset: 'Backs favourites', name: 'The Strategist' },
+      { market: 'Balanced approach',  upset: 'Backs underdogs',  name: 'The Wildcard'   },
+      { market: 'Balanced approach',  upset: 'Pure data',        name: 'The Tactician'  },
+    ],
+  },
+  {
+    strength: '⚽ Goals Tell Everything',
+    desc: 'trusts goals scored & quality',
+    names: [
+      { market: 'Trusts bookmakers',  upset: 'Backs favourites', name: 'The Calculator' },
+      { market: 'Trusts bookmakers',  upset: 'Backs underdogs',  name: 'The Alchemist'  },
+      { market: 'Trusts bookmakers',  upset: 'Pure data',        name: 'The Quant'      },
+      { market: 'Ignores bookmakers', upset: 'Backs favourites', name: 'The Professor'  },
+      { market: 'Ignores bookmakers', upset: 'Backs underdogs',  name: 'The Disruptor'  },
+      { market: 'Ignores bookmakers', upset: 'Pure data',        name: 'The Analyst'    },
+      { market: 'Balanced approach',  upset: 'Backs favourites', name: 'The Engineer'   },
+      { market: 'Balanced approach',  upset: 'Backs underdogs',  name: 'The Visionary'  },
+      { market: 'Balanced approach',  upset: 'Pure data',        name: 'The Oracle'     },
+    ],
+  },
+];
+
+function InfoModal({ onClose }) {
+  return (
+    <div className="oracle-info-overlay" onClick={onClose}>
+      <div className="oracle-info-modal" onClick={e => e.stopPropagation()}>
+        <button className="oracle-info-modal__close" onClick={onClose}>✕</button>
+
+        <h2 className="oracle-info-modal__title">⚔️ How Oracle Duel Works</h2>
+
+        {/* The two oracles */}
+        <div className="oracle-info-section">
+          <div className="oracle-info-oracles">
+            <div className="oracle-info-oracle oracle-info-oracle--algo">
+              <span className="oracle-info-oracle__icon">⚙️</span>
+              <div>
+                <strong>Your Oracle</strong>
+                <p>Built from your 3 card choices. It weighs FIFA rankings, current form, goals quality, and bookmaker odds — according to your philosophy. 27 possible personalities.</p>
+              </div>
+            </div>
+            <div className="oracle-info-oracle oracle-info-oracle--ai">
+              <span className="oracle-info-oracle__icon">🤖</span>
+              <div>
+                <strong>Groq AI</strong>
+                <p>An independent LLM analyst (Llama 3.3 70B). It predicts every match fresh each morning with no knowledge of your Oracle's choices — a true rival.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scoring */}
+        <div className="oracle-info-section">
+          <h3 className="oracle-info-section__title">⚡ Scoring Multipliers</h3>
+          <div className="oracle-info-scoring">
+            <div className="oracle-info-score">
+              <span className="oracle-info-score__mult oracle-info-score__mult--algo">×1.2</span>
+              <span>Sided with your Oracle — and it was right</span>
+            </div>
+            <div className="oracle-info-score">
+              <span className="oracle-info-score__mult oracle-info-score__mult--agree">×1.3</span>
+              <span>Both Oracles agreed — you sided with them</span>
+            </div>
+            <div className="oracle-info-score">
+              <span className="oracle-info-score__mult oracle-info-score__mult--defy">×2.0</span>
+              <span>Defied both Oracles — and proved them wrong</span>
+            </div>
+          </div>
+        </div>
+
+        {/* All 27 oracle names */}
+        <div className="oracle-info-section">
+          <h3 className="oracle-info-section__title">🔮 All 27 Oracle Names</h3>
+          <p className="oracle-info-names-hint">Your name is determined by your 3 card choices when you build your Oracle.</p>
+          {NAMES_BY_GROUP.map(group => (
+            <div key={group.strength} className="oracle-info-names-group">
+              <h4 className="oracle-info-names-group__title">
+                {group.strength} <span>— {group.desc}</span>
+              </h4>
+              <div className="oracle-info-names-grid">
+                {group.names.map(n => (
+                  <div key={n.name} className="oracle-info-name-row">
+                    <strong className="oracle-info-name-row__name">{n.name}</strong>
+                    <span className="oracle-info-name-row__tags">
+                      {n.market} · {n.upset}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Landing screen (first visit) ────────────────────────────────────────────
 
 function OracleLanding({ onBuild, onWatch }) {
@@ -464,6 +575,7 @@ function OracleDuel() {
   const [bets,        setBets]        = useState({});
   const [accuracy,    setAccuracy]    = useState(null);
   const [error,       setError]       = useState('');
+  const [showInfo,    setShowInfo]    = useState(false);
 
   const loadDuelData = useCallback(async () => {
     try {
@@ -538,7 +650,7 @@ function OracleDuel() {
     return (
       <div className="oracle-page">
         <button className="betting-back" onClick={() => navigate('/betting')}>
-          ← Betting Hub
+          ← Predictions Hub
         </button>
         <OracleLanding
           onBuild={() => setView('builder')}
@@ -554,13 +666,20 @@ function OracleDuel() {
   // ── Duel screen ─────────────────────────────────────────────────────────────
   return (
     <div className="oracle-page">
+      {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
+
       <div className="oracle-page__header">
         <button className="betting-back" onClick={() => navigate('/betting')}>
-          ← Betting Hub
+          ← Predictions Hub
         </button>
-        <button className="btn btn--outline oracle-page__rebuild" onClick={() => setView('builder')}>
-          ⚙️ {profile ? 'Rebuild Oracle' : 'Build Your Oracle'}
-        </button>
+        <div className="oracle-page__header-right">
+          <button className="oracle-info-btn" onClick={() => setShowInfo(true)} title="How it works">
+            ?
+          </button>
+          <button className="btn btn--outline oracle-page__rebuild" onClick={() => setView('builder')}>
+            ⚙️ {profile ? 'Rebuild Oracle' : 'Build Your Oracle'}
+          </button>
+        </div>
       </div>
 
       <h1 className="oracle-page__title">⚔️ Oracle Duel</h1>

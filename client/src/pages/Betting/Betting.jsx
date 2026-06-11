@@ -48,7 +48,7 @@ function BettingHub() {
   const navigate = useNavigate();
   return (
     <div>
-      <h1 className="betting__title">Betting Hub</h1>
+      <h1 className="betting__title">Predictions Hub</h1>
       <p className="betting__sub">Select a category to place or view your predictions</p>
       <div className="betting-tiles">
         {TILES.map(tile => (

@@ -14,7 +14,7 @@ function assertMatchNotLocked(match) {
     new Date(match.match_date).getTime() - LOCK.KNOCKOUT_LOCK_HOURS_BEFORE * 60 * 60 * 1000
   );
   if (new Date() >= lockTime) {
-    throw createError('Oracle betting is closed for this match.', 423);
+    throw createError('Oracle predictions are closed for this match.', 423);
   }
 }
 

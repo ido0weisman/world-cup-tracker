@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const { setTopScorerResult, getTopScorerResult } = require('../../services/scoring.service');
+const { fetchPredictionsForToday } = require('../../services/groqOracle.service');
 const db = require('../../config/db');
 
 const router = Router();
@@ -45,6 +46,15 @@ router.delete('/users', adminGuard, (req, res, next) => {
       DELETE FROM users;
     `);
     res.json({ message: 'All users and predictions cleared.' });
+  } catch (err) { next(err); }
+});
+
+// POST /api/admin/oracle-refresh — manually trigger today's Oracle prediction fetch
+// Useful right after setting GROQ_API_KEY or to re-run after a Groq failure.
+router.post('/oracle-refresh', adminGuard, async (req, res, next) => {
+  try {
+    await fetchPredictionsForToday();
+    res.json({ message: 'Oracle predictions refreshed for today\'s matches.' });
   } catch (err) { next(err); }
 });
 

@@ -12,7 +12,7 @@ function createError(message, statusCode) {
 // HTTP 423 = Locked — semantically correct for "this resource is currently locked"
 function assertGroupStageOpen() {
   if (new Date() > new Date(LOCK.GROUP_STAGE_LOCK_DATE)) {
-    throw createError('Group stage betting is now closed.', 423);
+    throw createError('Group stage predictions are now closed.', 423);
   }
 }
 
@@ -23,7 +23,7 @@ function assertMatchNotLocked(match) {
   );
   if (new Date() >= lockTime) {
     throw createError(
-      `Betting for this match is closed (locks ${LOCK.KNOCKOUT_LOCK_HOURS_BEFORE}h before kickoff).`,
+      `Predictions for this match are closed (locks ${LOCK.KNOCKOUT_LOCK_HOURS_BEFORE}h before kickoff).`,
       423
     );
   }

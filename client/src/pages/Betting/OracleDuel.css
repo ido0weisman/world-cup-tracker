@@ -53,7 +53,7 @@
 /* ── Oracle grid ──────────────────────────────────────────────────────────── */
 .oracle-duel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(540px, 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
@@ -276,32 +276,65 @@
   letter-spacing: 1px;
 }
 
-/* ── Oracle label ─────────────────────────────────────────────────────────── */
-.duel-card__oracle-label {
-  font-size: 0.72rem;
-  font-weight: 700;
+/* ── Two-column oracle duel layout ───────────────────────────────────────── */
+.duel-card__oracle-cols {
+  display: flex;
+  align-items: flex-start;
+  margin: 0.25rem 0;
+}
+
+.duel-card__oracle-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.75rem 0.75rem;
+}
+
+.duel-card__col-header {
+  font-size: 0.68rem;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: rgba(245,197,24,0.7);
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
-.duel-card__oracle-label--ai {
-  color: rgba(139,92,246,0.8);
-  margin-top: 0.25rem;
-}
+.duel-card__oracle-col--algo .duel-card__col-header { color: rgba(245,197,24,0.9); }
+.duel-card__oracle-col--ai   .duel-card__col-header { color: rgba(139,92,246,0.95); }
 
-/* ── Orb row ──────────────────────────────────────────────────────────────── */
-.duel-card__orbs {
+/* Thin vertical line with a VS label in the centre */
+.duel-card__col-divider {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  align-self: stretch;
+  position: relative;
+  padding: 0 0.25rem;
 }
-
-.duel-card__orb-divider {
-  flex: 1;
-  height: 1px;
-  background: rgba(255,255,255,0.06);
+.duel-card__col-divider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  background: rgba(255,255,255,0.07);
+}
+.duel-card__col-divider span {
+  position: relative;
+  z-index: 1;
+  background: rgba(10, 15, 30, 0.9); /* matches .duel-card background */
+  padding: 0.35rem 0.15rem;
+  font-size: 0.58rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: 2px;
 }
 
 /* ── Glowing orb ──────────────────────────────────────────────────────────── */
@@ -558,9 +591,238 @@
   margin-top: 0.25rem;
 }
 
+/* ── AI pending ──────────────────────────────────────────────────────────── */
+.duel-card__ai-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: rgba(139,92,246,0.55);
+  padding: 2.5rem 0.5rem;
+  letter-spacing: 0.3px;
+}
+.duel-card__ai-pending span {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.2);
+}
+
+/* ── Header right group (info + rebuild) ─────────────────────────────────── */
+.oracle-page__header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Info button ─────────────────────────────────────────────────────────── */
+.oracle-info-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+.oracle-info-btn:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+/* ── Info Modal overlay ──────────────────────────────────────────────────── */
+.oracle-info-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.oracle-info-modal {
+  position: relative;
+  background: #0d1124;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: 100%;
+  max-width: 640px;
+  color: var(--color-white);
+}
+
+.oracle-info-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: color var(--transition);
+}
+.oracle-info-modal__close:hover { color: var(--color-white); }
+
+.oracle-info-modal__title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--color-gold);
+  margin-bottom: 1.5rem;
+}
+
+/* ── Info sections ───────────────────────────────────────────────────────── */
+.oracle-info-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.oracle-info-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.oracle-info-section__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 1rem;
+}
+
+/* ── The two oracle cards ─────────────────────────────────────────────────── */
+.oracle-info-oracles {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.oracle-info-oracle {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.oracle-info-oracle--algo { background: rgba(245,197,24,0.05); }
+.oracle-info-oracle--ai   { background: rgba(139,92,246,0.05); }
+
+.oracle-info-oracle__icon { font-size: 1.5rem; flex-shrink: 0; }
+.oracle-info-oracle strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+.oracle-info-oracle--algo strong { color: var(--color-gold); }
+.oracle-info-oracle--ai   strong { color: rgba(180,130,255,1); }
+.oracle-info-oracle p {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Scoring ─────────────────────────────────────────────────────────────── */
+.oracle-info-scoring {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.oracle-info-score {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.oracle-info-score__mult {
+  font-size: 0.9rem;
+  font-weight: 900;
+  min-width: 3rem;
+  text-align: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+.oracle-info-score__mult--algo  { background: rgba(245,197,24,0.12);  color: var(--color-gold); }
+.oracle-info-score__mult--agree { background: rgba(16,185,129,0.12);  color: #6ee7b7; }
+.oracle-info-score__mult--defy  { background: rgba(220,38,38,0.12);   color: #fca5a5; }
+
+/* ── Names ────────────────────────────────────────────────────────────────── */
+.oracle-info-names-hint {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 1.25rem;
+}
+
+.oracle-info-names-group {
+  margin-bottom: 1.25rem;
+}
+
+.oracle-info-names-group__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 0.6rem;
+}
+.oracle-info-names-group__title span {
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+}
+
+.oracle-info-names-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem 0.75rem;
+}
+
+.oracle-info-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+}
+
+.oracle-info-name-row__name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-gold);
+}
+
+.oracle-info-name-row__tags {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.3);
+  line-height: 1.3;
+}
+
+@media (max-width: 500px) {
+  .oracle-info-names-grid { grid-template-columns: repeat(2, 1fr); }
+  .oracle-info-oracles    { flex-direction: column; }
+}
+
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
-@media (max-width: 480px) {
+@media (max-width: 560px) {
   .oracle-duel-grid { grid-template-columns: 1fr; }
   .oracle-landing__options { flex-direction: column; align-items: center; }
   .oracle-landing__option  { width: 100%; max-width: 300px; }
+  .duel-card__oracle-col { padding: 0.5rem 0.25rem; gap: 0.75rem; }
 }

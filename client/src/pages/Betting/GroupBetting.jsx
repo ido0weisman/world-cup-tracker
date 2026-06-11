@@ -101,7 +101,7 @@ function GroupBetting() {
     <div>
       <button className="betting-back" onClick={() => navigate('/betting')}>← Back</button>
       <h1 style={{ color: 'var(--color-gold)', fontSize: '1.8rem', fontWeight: 800, marginBottom: '0.4rem' }}>
-        📊 Group Stage Betting
+        📊 Group Stage Predictions
       </h1>
       <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.875rem' }}>
         Pick 2 teams per group you think will advance. Locks June 11, 2026 — 1 hour before the opening match.

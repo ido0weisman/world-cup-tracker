@@ -118,7 +118,7 @@ function KnockoutBetting() {
     <div>
       <button className="betting-back" onClick={() => navigate('/betting')}>← Back</button>
       <h1 style={{ color: 'var(--color-gold)', fontSize: '1.8rem', fontWeight: 800, marginBottom: '0.4rem' }}>
-        🥊 Knockout Betting
+        🥊 Knockout Predictions
       </h1>
       <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.875rem' }}>
         Pick the winner of each match. Each match locks 1 hour before kickoff.
