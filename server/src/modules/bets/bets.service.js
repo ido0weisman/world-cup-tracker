@@ -203,9 +203,11 @@ function getLeaderboard() {
       COALESCE(ko.knockout_points,  0) AS knockout_points,
       COALESCE(gp.group_points,     0) AS group_points,
       COALESCE(ts.top_scorer_points,0) AS top_scorer_points,
+      COALESCE(ob.oracle_points,    0) AS oracle_points,
       COALESCE(ko.knockout_points,  0)
         + COALESCE(gp.group_points, 0)
-        + COALESCE(ts.top_scorer_points, 0) AS total_points
+        + COALESCE(ts.top_scorer_points, 0)
+        + COALESCE(ob.oracle_points, 0) AS total_points
     FROM users u
 
     -- Knockout: stage-weighted points for each correct prediction
@@ -255,6 +257,14 @@ function getLeaderboard() {
         AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
     ) ts ON u.id = ts.user_id
 
+    -- Oracle: sum of points_awarded for all scored oracle bets
+    LEFT JOIN (
+      SELECT user_id, SUM(points_awarded) AS oracle_points
+      FROM oracle_bets
+      WHERE is_correct IS NOT NULL
+      GROUP BY user_id
+    ) ob ON u.id = ob.user_id
+
     ORDER BY total_points DESC, u.full_name ASC
     LIMIT 25
   `).all();
@@ -272,9 +282,11 @@ function getUserScore(userId) {
       COALESCE(ko.knockout_points,  0) AS knockout_points,
       COALESCE(gp.group_points,     0) AS group_points,
       COALESCE(ts.top_scorer_points,0) AS top_scorer_points,
+      COALESCE(ob.oracle_points,    0) AS oracle_points,
       COALESCE(ko.knockout_points,  0)
         + COALESCE(gp.group_points, 0)
-        + COALESCE(ts.top_scorer_points, 0) AS total_points
+        + COALESCE(ts.top_scorer_points, 0)
+        + COALESCE(ob.oracle_points, 0) AS total_points
     FROM users u
 
     LEFT JOIN (
@@ -318,6 +330,13 @@ function getUserScore(userId) {
       JOIN tournament_results tr_team ON tr_team.result_key = 'top_scorer_team_id'
         AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
     ) ts ON u.id = ts.user_id
+
+    LEFT JOIN (
+      SELECT user_id, SUM(points_awarded) AS oracle_points
+      FROM oracle_bets
+      WHERE is_correct IS NOT NULL
+      GROUP BY user_id
+    ) ob ON u.id = ob.user_id
 
     WHERE u.id = ?
   `).get(userId);

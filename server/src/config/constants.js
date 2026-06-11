@@ -18,21 +18,22 @@ const MATCH_STATUS = {
 
 // Points awarded per correct prediction (see MASTER_PLAN.md Phase 6)
 const SCORING = {
-  GROUP_ADVANCE_PER_TEAM: 5,
-  R32_WINNER: 2,
-  R16_WINNER: 3,
-  QF_WINNER: 5,
-  SF_WINNER: 8,
-  FINAL_WINNER: 15,
-  TOP_SCORER: 20,
+  GROUP_ADVANCE_PER_TEAM: 10,
+  R32_WINNER: 5,
+  R16_WINNER: 8,
+  QF_WINNER: 12,
+  SF_WINNER: 20,
+  FINAL_WINNER: 35,
+  TOP_SCORER: 50,
 
-  // Oracle Duel multipliers applied on top of the base knockout points.
-  // sided_with = 'algorithm' or 'ai' → normal points × this multiplier.
-  // sided_with = 'both'    → both agreed, user sided with them → slight bonus.
-  // sided_with = 'neither' → user defied both Oracles → highest risk/reward.
-  ORACLE_WITH_WINNER:     1.2,  // sided with the Oracle that was correct
-  ORACLE_BOTH_AGREED:     1.3,  // both Oracles agreed and user went with them
-  ORACLE_DEFY_BOTH:       2.0,  // user picked against both Oracles and was right
+  // Oracle Duel multipliers applied on top of the oracle base points.
+  // Multipliers are chosen to always produce clean integers with the base of 5.
+  // sided_with = 'algorithm' or 'ai' → base × 1.2  (e.g. 5 × 1.2 = 6 pts)
+  // sided_with = 'both'              → base × 1.4  (e.g. 5 × 1.4 = 7 pts)
+  // sided_with = 'neither'           → base × 2.0  (e.g. 5 × 2.0 = 10 pts)
+  ORACLE_WITH_WINNER:     1.2,
+  ORACLE_BOTH_AGREED:     1.4,
+  ORACLE_DEFY_BOTH:       2.0,
 };
 
 // Betting lock rules

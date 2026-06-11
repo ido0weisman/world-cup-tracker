@@ -702,7 +702,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 2rem 1rem;
+  /* top padding accounts for the fixed header (~64px) + breathing room */
+  padding: 5rem 1rem 2rem;
   overflow-y: auto;
 }
 

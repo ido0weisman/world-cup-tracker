@@ -100,10 +100,13 @@ function scoreOracleBets() {
       let pointsAwarded = 0;
       if (isCorrect) {
         // Determine base points from match stage
+        // Oracle base points per stage — Group/R32 use 5 (gives clean 6/7/10 with ×1.2/1.4/2.0).
+        // R16+ use their stage value so oracle scales with match importance.
         const stagePoints = {
-          GROUP: 2, R32: SCORING.R32_WINNER, R16: SCORING.R16_WINNER,
-          QF: SCORING.QF_WINNER, SF: SCORING.SF_WINNER, FINAL: SCORING.FINAL_WINNER,
-        }[match.stage] ?? 2;
+          GROUP: 5, R32: 5,
+          R16: SCORING.R16_WINNER, QF: SCORING.QF_WINNER,
+          SF: SCORING.SF_WINNER,   FINAL: SCORING.FINAL_WINNER,
+        }[match.stage] ?? 5;
 
         // Apply Oracle multiplier based on what the user sided with
         const algoPickedHome = bet.algorithm_home_prob > bet.algorithm_away_prob;

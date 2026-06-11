@@ -35,17 +35,24 @@ function Leaderboard() {
         <div className="leaderboard__scoring-panel">
           <h2 className="leaderboard__scoring-title">How points are earned</h2>
           <ul className="leaderboard__scoring-list">
-            <li><strong>Group stage —</strong> 5 pts for each of your two picks that finishes in the top 2 of its group (10 pts max per group, once the group has kicked off).</li>
-            <li><strong>Round of 32 —</strong> 2 pts for each correct match winner.</li>
-            <li><strong>Round of 16 —</strong> 3 pts for each correct match winner.</li>
-            <li><strong>Quarter-finals —</strong> 5 pts for each correct match winner.</li>
-            <li><strong>Semi-finals —</strong> 8 pts for each correct match winner.</li>
-            <li><strong>Final —</strong> 15 pts for the correct winner.</li>
-            <li><strong>Top scorer —</strong> 20 pts if you predict both the player and their team correctly.</li>
+            <li><strong>Group stage —</strong> 10 pts for each of your two picks that finishes in the top 2 of its group (20 pts max per group).</li>
+            <li><strong>Round of 32 —</strong> 5 pts for each correct match winner.</li>
+            <li><strong>Round of 16 —</strong> 8 pts for each correct match winner.</li>
+            <li><strong>Quarter-finals —</strong> 12 pts for each correct match winner.</li>
+            <li><strong>Semi-finals —</strong> 20 pts for each correct match winner.</li>
+            <li><strong>Final —</strong> 35 pts for the correct winner.</li>
+            <li><strong>Top scorer —</strong> 50 pts if you predict both the player and their team correctly.</li>
+            <li><strong>🔮 Oracle Duel —</strong> awarded per match based on who you sided with:
+              <ul style={{ marginTop: '0.4rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <li>Back Your Oracle and it was right → <strong>6 pts</strong> (Group/R32)</li>
+                <li>Both Oracles agreed and you sided with them → <strong>7 pts</strong></li>
+                <li>Defied both Oracles and proved them wrong → <strong>10 pts</strong></li>
+                <li>Points scale up in later rounds (QF=14/17/24, SF=24/28/40, Final=42/49/70).</li>
+              </ul>
+            </li>
           </ul>
           <p className="leaderboard__scoring-note">
-            Your total is the sum of all four categories — Groups, Knockout, Top Scorer — and updates live as
-            results come in.
+            Your total is the sum of all five categories — Groups, Knockout, Top Scorer, and Oracle Duel — and updates live as results come in.
           </p>
         </div>
       )}
@@ -61,6 +68,7 @@ function Leaderboard() {
             <span>Groups</span>
             <span>Knockout</span>
             <span>Top Scorer</span>
+            <span>🔮 Oracle</span>
             <span>Total</span>
           </div>
           {data?.leaderboard?.map(row => (
@@ -78,6 +86,7 @@ function Leaderboard() {
               <span>{row.group_points}</span>
               <span>{row.knockout_points}</span>
               <span>{row.top_scorer_points}</span>
+              <span>{row.oracle_points}</span>
               <span className="leaderboard__total">{row.total_points}</span>
             </div>
           ))}

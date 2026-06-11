@@ -202,6 +202,13 @@ function GlowOrb({ prob, color, label, flag }) {
   );
 }
 
+// Compute the integer points a user would earn for an Oracle bet on this stage.
+// Mirrors the server-side logic in scoring.service.js exactly.
+const ORACLE_BASE = { GROUP: 5, R32: 5, R16: 8, QF: 12, SF: 20, FINAL: 35 };
+function oraclePts(stage, multiplier) {
+  return Math.round((ORACLE_BASE[stage] ?? 5) * multiplier);
+}
+
 // ─── Single match duel card ───────────────────────────────────────────────────
 
 function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
@@ -325,7 +332,7 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
               }}
             >
               ⚙️ Back Your Oracle
-              <span className="duel-card__bet-pts">×1.2 pts</span>
+              <span className="duel-card__bet-pts">{oraclePts(match.stage, bothAgree ? 1.4 : 1.2)} pts</span>
             </button>
 
             {aiPred && !bothAgree && (
@@ -338,7 +345,7 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
                 }}
               >
                 🤖 Back the AI
-                <span className="duel-card__bet-pts">×1.2 pts</span>
+                <span className="duel-card__bet-pts">{oraclePts(match.stage, 1.2)} pts</span>
               </button>
             )}
 
@@ -353,7 +360,7 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
               }}
             >
               ⚡ Defy Both
-              <span className="duel-card__bet-pts">×2.0 pts</span>
+              <span className="duel-card__bet-pts">{oraclePts(match.stage, 2.0)} pts</span>
             </button>
           </div>
         </div>
@@ -494,19 +501,24 @@ function InfoModal({ onClose }) {
 
         {/* Scoring */}
         <div className="oracle-info-section">
-          <h3 className="oracle-info-section__title">⚡ Scoring Multipliers</h3>
+          <h3 className="oracle-info-section__title">⚡ Points Per Correct Bet</h3>
           <div className="oracle-info-scoring">
             <div className="oracle-info-score">
-              <span className="oracle-info-score__mult oracle-info-score__mult--algo">×1.2</span>
-              <span>Sided with your Oracle — and it was right</span>
+              <span className="oracle-info-score__mult oracle-info-score__mult--algo">6 pts</span>
+              <span>Sided with your Oracle — and it was right (Group / R32)</span>
             </div>
             <div className="oracle-info-score">
-              <span className="oracle-info-score__mult oracle-info-score__mult--agree">×1.3</span>
-              <span>Both Oracles agreed — you sided with them</span>
+              <span className="oracle-info-score__mult oracle-info-score__mult--agree">7 pts</span>
+              <span>Both Oracles agreed — you sided with them (Group / R32)</span>
             </div>
             <div className="oracle-info-score">
-              <span className="oracle-info-score__mult oracle-info-score__mult--defy">×2.0</span>
-              <span>Defied both Oracles — and proved them wrong</span>
+              <span className="oracle-info-score__mult oracle-info-score__mult--defy">10 pts</span>
+              <span>Defied both Oracles — and proved them wrong (Group / R32)</span>
+            </div>
+            <div className="oracle-info-score" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '0.5rem', marginTop: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>
+                Points scale up in QF (×2), SF (×3) and Final (×5).
+              </span>
             </div>
           </div>
         </div>

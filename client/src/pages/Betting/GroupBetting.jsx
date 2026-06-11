@@ -8,9 +8,8 @@ import { useToast } from '../../context/ToastContext';
 import './Betting.css';
 import './GroupBetting.css';
 
-// Locks 1 hour before the tournament's opening match (Mexico vs. South Africa,
-// Estadio Azteca, kickoff 19:00 UTC on 11 June 2026).
-const LOCK_DATE = new Date('2026-06-11T18:00:00Z');
+// Extended lock date — gives LinkedIn visitors time to register and place picks.
+const LOCK_DATE = new Date('2026-06-13T14:00:00Z');
 const isLocked  = () => new Date() > LOCK_DATE;
 
 function GroupBettingCard({ group, existingBet, onSave }) {
@@ -104,7 +103,7 @@ function GroupBetting() {
         📊 Group Stage Predictions
       </h1>
       <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.875rem' }}>
-        Pick 2 teams per group you think will advance. Locks June 11, 2026 — 1 hour before the opening match.
+        Pick 2 teams per group you think will advance. Locks June 13, 2026 at 14:00 UTC.
       </p>
 
       <div className="group-bets-grid">
