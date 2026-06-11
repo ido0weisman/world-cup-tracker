@@ -540,13 +540,44 @@
   gap: 0.5rem;
 }
 
-.btn--oracle-algo,
-.btn--oracle-ai,
-.btn--oracle-defy {
+/* ── AI confidence badge ─────────────────────────────────────────────────── */
+.duel-card__confidence {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+}
+
+.duel-card__confidence--high {
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.2);
+}
+.duel-card__confidence--low {
+  background: rgba(245,197,24,0.06);
+  border: 1px solid rgba(245,197,24,0.15);
+}
+
+.duel-card__confidence-label {
+  color: rgba(255,255,255,0.75);
+}
+.duel-card__confidence-label strong {
+  color: var(--color-white);
+}
+
+.duel-card__confidence-tiers {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.2px;
+}
+
+/* ── Team bet buttons (new) ──────────────────────────────────────────────── */
+.btn--oracle-team {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 1rem;
+  padding: 0.65rem 1rem;
   border-radius: var(--radius-sm);
   border: 1px solid;
   cursor: pointer;
@@ -556,31 +587,44 @@
   transition: opacity var(--transition), transform var(--transition);
   background: none;
 }
-.btn--oracle-algo:hover,
-.btn--oracle-ai:hover,
-.btn--oracle-defy:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn--oracle-team:hover { opacity: 0.85; transform: translateY(-1px); }
 
-.btn--oracle-algo {
-  border-color: rgba(245,197,24,0.4);
-  color: var(--color-gold);
-  background: rgba(245,197,24,0.06);
-}
-.btn--oracle-ai {
+/* With AI — purple tint (the safe, lower-reward pick) */
+.btn--oracle-team--with-ai {
   border-color: rgba(139,92,246,0.4);
   color: rgba(180,130,255,1);
   background: rgba(139,92,246,0.06);
 }
-.btn--oracle-defy {
+
+/* Against AI — gold/red tint (the risky, higher-reward pick) */
+.btn--oracle-team--against-ai {
   border-color: rgba(248,113,113,0.35);
   color: #fca5a5;
   background: rgba(220,38,38,0.06);
+}
+
+.duel-card__bet-team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.duel-card__ai-pick {
+  font-size: 0.75rem;
+  opacity: 0.7;
 }
 
 .duel-card__bet-pts {
   font-size: 0.72rem;
   font-weight: 600;
   opacity: 0.7;
+  white-space: nowrap;
 }
+
+/* ── Sided-with tags ─────────────────────────────────────────────────────── */
+.duel-card__sided { font-size: 0.75rem; }
+.duel-card__sided--with    { color: rgba(139,92,246,0.8); }
+.duel-card__sided--against { color: #fca5a5; }
 
 /* ── Existing bet / locked ────────────────────────────────────────────────── */
 .duel-card__existing-bet {
@@ -778,59 +822,3 @@
 /* ── The two oracle cards ─────────────────────────────────────────────────── */
 .oracle-info-oracles {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.oracle-info-oracle {
-  flex: 1;
-  min-width: 220px;
-  display: flex;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255,255,255,0.07);
-}
-.oracle-info-oracle--algo { background: rgba(245,197,24,0.05); }
-.oracle-info-oracle--ai   { background: rgba(139,92,246,0.05); }
-
-.oracle-info-oracle__icon { font-size: 1.5rem; flex-shrink: 0; }
-.oracle-info-oracle strong {
-  display: block;
-  font-size: 0.9rem;
-  margin-bottom: 0.3rem;
-}
-.oracle-info-oracle--algo strong { color: var(--color-gold); }
-.oracle-info-oracle--ai   strong { color: rgba(180,130,255,1); }
-.oracle-info-oracle p {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.5);
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* ── Scoring ─────────────────────────────────────────────────────────────── */
-.oracle-info-scoring {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.oracle-info-score {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.7);
-}
-
-.oracle-info-score__mult {
-  font-size: 0.9rem;
-  font-weight: 900;
-  min-width: 3rem;
-  text-align: center;
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-sm);
-}
-.oracle-info-score__mult--algo  { background: rgba(245,197,24,0.12);  color: var(--color-gold); }
-.oracle-info-score

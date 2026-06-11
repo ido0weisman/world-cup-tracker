@@ -202,11 +202,17 @@ function GlowOrb({ prob, color, label, flag }) {
   );
 }
 
-// Compute the integer points a user would earn for an Oracle bet on this stage.
-// Mirrors the server-side logic in scoring.service.js exactly.
-const ORACLE_BASE = { GROUP: 5, R32: 5, R16: 8, QF: 12, SF: 20, FINAL: 35 };
-function oraclePts(stage, multiplier) {
-  return Math.round((ORACLE_BASE[stage] ?? 5) * multiplier);
+// Compute the integer points a user would earn for an Oracle bet.
+// Mirrors server-side scoring.service.js — confidence-based tiers.
+const ORACLE_BASE        = { GROUP: 5, R32: 5, R16: 8, QF: 12, SF: 20, FINAL: 35 };
+const CONFIDENCE_HIGH    = 70;
+
+function oraclePts(stage, aiConfidence, agreedWithAI) {
+  const base = ORACLE_BASE[stage] ?? 5;
+  if (aiConfidence == null) return base; // no AI data — flat
+  const high = aiConfidence >= CONFIDENCE_HIGH;
+  if (high)  return Math.round(base * (agreedWithAI ? 0.6 : 2.4));
+  return Math.round(base * (agreedWithAI ? 1.2 : 1.6));
 }
 
 // ─── Single match duel card ───────────────────────────────────────────────────
@@ -217,41 +223,27 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
   const [submitting, setSubmitting] = useState(false);
   const [localBet, setLocalBet]     = useState(existingBet);
 
-  const home = match;
-  const away = match;
+  const algoPred     = prediction.algorithm;
+  const aiPred       = prediction.ai;
+  const aiConfidence = prediction.ai_confidence ?? null; // max(home_prob, away_prob)
 
-  const algoPred = prediction.algorithm;
-  const aiPred   = prediction.ai;
-
-  const isLocked  = new Date() >= new Date(new Date(match.match_date).getTime() - 60 * 60 * 1000);
+  const isLocked   = new Date() >= new Date(new Date(match.match_date).getTime() - 60 * 60 * 1000);
   const isFinished = match.status === 'FINISHED';
 
-  // Which side does each Oracle back?
+  // Which team does each Oracle favour?
   const algoBacksHome = algoPred.home_prob >= algoPred.away_prob;
   const aiBacksHome   = aiPred ? aiPred.home_prob >= aiPred.away_prob : null;
-  const bothAgree     = aiPred && algoBacksHome === aiBacksHome;
 
-  let verdictText = '';
-  if (aiPred) {
-    if (bothAgree) {
-      const backed = algoBacksHome ? match.home_team_name : match.away_team_name;
-      verdictText = `✅ BOTH ORACLES BACK ${backed.toUpperCase()}`;
-    } else {
-      verdictText = '⚡ THE ORACLES DISAGREE — Who do you trust?';
-    }
-  } else {
-    const backed = algoBacksHome ? match.home_team_name : match.away_team_name;
-    verdictText = `🔮 YOUR ORACLE BACKS ${backed.toUpperCase()}`;
-  }
+  // AI confidence tier — drives both the badge text and button point labels
+  const isHighConf   = aiConfidence != null && aiConfidence >= CONFIDENCE_HIGH;
+  const aiPickedTeam = aiPred
+    ? (aiBacksHome ? match.home_team_name : match.away_team_name)
+    : null;
 
-  async function placeBet(pickedTeamId, sidedWith) {
+  async function placeBet(pickedTeamId) {
     setSubmitting(true);
     try {
-      await submitOracleBet({
-        match_id:         match.id,
-        picked_winner_id: pickedTeamId,
-        sided_with:       sidedWith,
-      });
+      await submitOracleBet({ match_id: match.id, picked_winner_id: pickedTeamId });
       const updated = await getOracleBet(match.id);
       setLocalBet(updated.bet);
       addToast('Oracle bet placed!', 'success');
@@ -262,6 +254,11 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
       setSubmitting(false);
     }
   }
+
+  // Derive picked team name from existing bet for display
+  const pickedName = localBet
+    ? (localBet.picked_winner_id === match.home_team_id ? match.home_team_name : match.away_team_name)
+    : null;
 
   return (
     <div className="duel-card">
@@ -286,8 +283,8 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
         {/* Your Oracle — left column */}
         <div className="duel-card__oracle-col duel-card__oracle-col--algo">
           <p className="duel-card__col-header">⚙️ {profile?.oracle_name ?? 'Your Oracle'}</p>
-          <GlowOrb prob={algoPred.home_prob} color="gold" label={match.home_team_name} flag={match.home_flag} />
-          <GlowOrb prob={algoPred.away_prob} color="gold" label={match.away_team_name} flag={match.away_flag} />
+          <GlowOrb prob={algoPred.home_prob} color="gold"   label={match.home_team_name} flag={match.home_flag} />
+          <GlowOrb prob={algoPred.away_prob} color="gold"   label={match.away_team_name} flag={match.away_flag} />
         </div>
 
         {/* VS divider */}
@@ -311,59 +308,49 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
 
       </div>
 
-      {/* Verdict */}
-      <p className={`duel-card__verdict ${bothAgree ? 'duel-card__verdict--agree' : 'duel-card__verdict--disagree'}`}>
-        {verdictText}
-      </p>
+      {/* AI confidence badge — shows point tiers for this specific match */}
+      {aiPred && (
+        <div className={`duel-card__confidence ${isHighConf ? 'duel-card__confidence--high' : 'duel-card__confidence--low'}`}>
+          <span className="duel-card__confidence-label">
+            🤖 AI is <strong>{aiConfidence}%</strong> confident — {aiPickedTeam} favoured
+          </span>
+          <span className="duel-card__confidence-tiers">
+            {isHighConf
+              ? `Back AI: ${oraclePts(match.stage, aiConfidence, true)} pts  ·  Defy: ${oraclePts(match.stage, aiConfidence, false)} pts`
+              : `Back AI: ${oraclePts(match.stage, aiConfidence, true)} pts  ·  Defy: ${oraclePts(match.stage, aiConfidence, false)} pts`
+            }
+          </span>
+        </div>
+      )}
 
-      {/* Bet section — visible until 1 hour before kickoff, even to change an existing bet */}
+      {/* Bet section — two team buttons with dynamic point labels */}
       {!isFinished && !isLocked && profile && (
         <div className="duel-card__bet-section">
           <p className="duel-card__bet-label">
-            {localBet ? '🔄 Change your side:' : 'Who do you side with?'}
+            {localBet ? '🔄 Change your pick:' : 'Pick a winner:'}
           </p>
           <div className="duel-card__bet-buttons">
-            {/* Pick a winner siding with Algorithm Oracle */}
-            <button
-              className="btn btn--oracle-algo"
-              disabled={submitting}
-              onClick={() => {
-                const pick = algoBacksHome ? match.home_team_id : match.away_team_id;
-                const side = aiPred && bothAgree ? 'both' : 'algorithm';
-                placeBet(pick, side);
-              }}
-            >
-              ⚙️ Back Your Oracle
-              <span className="duel-card__bet-pts">{oraclePts(match.stage, bothAgree ? 0.8 : 1.2)} pts</span>
-            </button>
-
-            {aiPred && !bothAgree && (
-              <button
-                className="btn btn--oracle-ai"
-                disabled={submitting}
-                onClick={() => {
-                  const pick = aiBacksHome ? match.home_team_id : match.away_team_id;
-                  placeBet(pick, 'ai');
-                }}
-              >
-                🤖 Back the AI
-                <span className="duel-card__bet-pts">{oraclePts(match.stage, 1.2)} pts</span>
-              </button>
-            )}
-
-            {/* Defy both — user manually picks the underdog */}
-            <button
-              className="btn btn--oracle-defy"
-              disabled={submitting}
-              onClick={() => {
-                // Defy = pick whichever team the algorithm thinks is less likely
-                const pick = algoBacksHome ? match.away_team_id : match.home_team_id;
-                placeBet(pick, 'neither');
-              }}
-            >
-              ⚡ Defy Both
-              <span className="duel-card__bet-pts">{oraclePts(match.stage, 2.0)} pts</span>
-            </button>
+            {[
+              { teamId: match.home_team_id, name: match.home_team_name, flag: match.home_flag, aibacks: aiBacksHome === true },
+              { teamId: match.away_team_id, name: match.away_team_name, flag: match.away_flag, aibacks: aiBacksHome === false },
+            ].map(team => {
+              const pts = oraclePts(match.stage, aiConfidence, team.aibacks);
+              return (
+                <button
+                  key={team.teamId}
+                  className={`btn btn--oracle-team ${team.aibacks ? 'btn--oracle-team--with-ai' : 'btn--oracle-team--against-ai'}`}
+                  disabled={submitting}
+                  onClick={() => placeBet(team.teamId)}
+                >
+                  <span className="duel-card__bet-team">
+                    {team.flag && <img src={team.flag} alt={team.name} className="duel-card__flag" />}
+                    {team.name}
+                    {team.aibacks && <span className="duel-card__ai-pick">🤖</span>}
+                  </span>
+                  <span className="duel-card__bet-pts">{pts} pts</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -372,7 +359,10 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
       {localBet && (
         <div className="duel-card__existing-bet">
           <span>{isLocked || isFinished ? 'Your bet: ' : 'Current: '}</span>
-          <strong>{localBet.sided_with === 'algorithm' ? '⚙️ Your Oracle' : localBet.sided_with === 'ai' ? '🤖 Groq AI' : localBet.sided_with === 'both' ? '✅ Both Oracles' : '⚡ Defied Both'}</strong>
+          <strong>{pickedName}</strong>
+          <span className={`duel-card__sided ${localBet.sided_with === 'with_ai' ? 'duel-card__sided--with' : localBet.sided_with === 'against_ai' ? 'duel-card__sided--against' : ''}`}>
+            {localBet.sided_with === 'with_ai' ? ' · with AI' : localBet.sided_with === 'against_ai' ? ' · defied AI' : ''}
+          </span>
           {localBet.is_correct === 1 && <span className="duel-card__result duel-card__result--win"> ✓ Correct</span>}
           {localBet.is_correct === 0 && <span className="duel-card__result duel-card__result--loss"> ✗ Wrong</span>}
         </div>
@@ -504,22 +494,29 @@ function InfoModal({ onClose }) {
         {/* Scoring */}
         <div className="oracle-info-section">
           <h3 className="oracle-info-section__title">⚡ Points Per Correct Bet</h3>
+          <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.75rem' }}>
+            Points depend on how confident the AI was — not on oracle agreement.
+          </p>
           <div className="oracle-info-scoring">
             <div className="oracle-info-score">
-              <span className="oracle-info-score__mult oracle-info-score__mult--agree">4 pts</span>
-              <span>Both Oracles agreed — you took the safe pick (Group / R32)</span>
+              <span className="oracle-info-score__mult oracle-info-score__mult--agree">3 pts</span>
+              <span>AI ≥ 70% confident — you backed the AI's pick (Group / R32)</span>
             </div>
             <div className="oracle-info-score">
               <span className="oracle-info-score__mult oracle-info-score__mult--algo">6 pts</span>
-              <span>Oracles disagreed — you backed one and it was right (Group / R32)</span>
+              <span>AI under 70% confident — you backed the AI's pick (Group / R32)</span>
             </div>
             <div className="oracle-info-score">
-              <span className="oracle-info-score__mult oracle-info-score__mult--defy">10 pts</span>
-              <span>Defied both Oracles — and proved them wrong (Group / R32)</span>
+              <span className="oracle-info-score__mult oracle-info-score__mult--algo">8 pts</span>
+              <span>AI under 70% confident — you went against the AI (Group / R32)</span>
+            </div>
+            <div className="oracle-info-score">
+              <span className="oracle-info-score__mult oracle-info-score__mult--defy">12 pts</span>
+              <span>AI ≥ 70% confident — you defied the AI and were right (Group / R32)</span>
             </div>
             <div className="oracle-info-score" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '0.5rem', marginTop: '0.25rem' }}>
               <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>
-                Points scale up in QF (×2), SF (×3) and Final (×5).
+                Points scale up in later rounds. The badge on each match card shows exact pts for that game.
               </span>
             </div>
           </div>
@@ -676,23 +673,4 @@ function OracleDuel() {
     );
   }
 
-  // ── Duel screen ─────────────────────────────────────────────────────────────
-  return (
-    <div className="oracle-page">
-      {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
-
-      <div className="oracle-page__header">
-        <button className="betting-back" onClick={() => navigate('/betting')}>
-          ← Predictions Hub
-        </button>
-        <div className="oracle-page__header-right">
-          <button className="oracle-info-btn" onClick={() => setShowInfo(true)} title="How it works">
-            ?
-          </button>
-          <button className="btn btn--outline oracle-page__rebuild" onClick={() => setView('builder')}>
-            ⚙️ {profile ? 'Rebuild Oracle' : 'Build Your Oracle'}
-          </button>
-        </div>
-      </div>
-
-      <h1 className="oracle-page__title">⚔️
+  // ── Duel screen ──────

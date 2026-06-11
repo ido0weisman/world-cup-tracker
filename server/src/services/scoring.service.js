@@ -69,7 +69,7 @@ function getTopScorerResult() {
 
 // Called alongside scoreKnockoutPredictions after each cache refresh.
 // For every finished match with a known winner, finds all unscored oracle_bets
-// and awards points based on correctness + which Oracle the user sided with.
+// and awards points based on correctness + AI confidence at bet time.
 function scoreOracleBets() {
   const finishedMatches = db.prepare(`
     SELECT m.id, m.winner_team_id, m.home_team_id, m.away_team_id, m.stage,
@@ -99,35 +99,38 @@ function scoreOracleBets() {
 
       let pointsAwarded = 0;
       if (isCorrect) {
-        // Determine base points from match stage
-        // Oracle base points per stage — Group/R32 use 5 (gives clean 6/7/10 with ×1.2/1.4/2.0).
-        // R16+ use their stage value so oracle scales with match importance.
+        // Base points scale with match stage — same as knockout predictions.
         const stagePoints = {
           GROUP: 5, R32: 5,
           R16: SCORING.R16_WINNER, QF: SCORING.QF_WINNER,
           SF: SCORING.SF_WINNER,   FINAL: SCORING.FINAL_WINNER,
         }[match.stage] ?? 5;
 
-        // Apply Oracle multiplier based on what the user sided with
-        const algoPickedHome = bet.algorithm_home_prob > bet.algorithm_away_prob;
+        // Points depend on AI confidence, not oracle agreement.
+        // Confidence = max(home_prob, away_prob) — snapshotted on the bet at submit time.
         const aiPickedHome   = bet.ai_home_prob != null && bet.ai_home_prob > bet.ai_away_prob;
         const userPickedHome = bet.picked_winner_id === match.home_team_id;
-        const algoWasRight   = algoPickedHome === userPickedHome;
-        const aiWasRight     = bet.ai_home_prob != null && aiPickedHome === userPickedHome;
+        const agreedWithAI   = bet.ai_home_prob != null && aiPickedHome === userPickedHome;
+        const aiConfidence   = Math.max(bet.ai_home_prob ?? 50, bet.ai_away_prob ?? 50);
+        const highConfidence = bet.ai_home_prob != null && aiConfidence >= SCORING.ORACLE_CONFIDENCE_HIGH;
 
-        let multiplier = 1.0;
-        if (bet.sided_with === 'neither') {
-          multiplier = SCORING.ORACLE_DEFY_BOTH;
-        } else if (bet.sided_with === 'both') {
-          multiplier = SCORING.ORACLE_BOTH_AGREED;
-        } else if (bet.sided_with === 'algorithm' && algoWasRight) {
-          multiplier = SCORING.ORACLE_WITH_WINNER;
-        } else if (bet.sided_with === 'ai' && aiWasRight) {
-          multiplier = SCORING.ORACLE_WITH_WINNER;
+        let multiplier;
+        if (bet.ai_home_prob == null) {
+          multiplier = 1.0; // No AI data — flat base points
+        } else if (highConfidence) {
+          multiplier = agreedWithAI ? SCORING.ORACLE_HIGH_WITH_AI : SCORING.ORACLE_HIGH_AGAINST_AI;
+        } else {
+          multiplier = agreedWithAI ? SCORING.ORACLE_LOW_WITH_AI : SCORING.ORACLE_LOW_AGAINST_AI;
         }
 
         pointsAwarded = Math.round(stagePoints * multiplier);
       }
 
       db.prepare(`
-        UPDATE oracle_bets SET is_correct = ?, points_awarded = ? WHER
+        UPDATE oracle_bets SET is_correct = ?, points_awarded = ? WHERE id = ?
+      `).run(isCorrect, pointsAwarded, bet.id);
+    }
+  }
+}
+
+module.exports = { scor

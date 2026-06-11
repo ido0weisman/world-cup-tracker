@@ -87,7 +87,12 @@ function getOraclePrediction(matchId, userId) {
     ? { home_prob: stored.ai_home_prob, away_prob: stored.ai_away_prob }
     : null;
 
-  return { match_id: matchId, algorithm: algorithmPred, ai: aiPred };
+  // Confidence = max prob — the UI uses this to show dynamic point tiers on bet buttons.
+  const ai_confidence = aiPred != null
+    ? Math.max(aiPred.home_prob, aiPred.away_prob)
+    : null;
+
+  return { match_id: matchId, algorithm: algorithmPred, ai: aiPred, ai_confidence };
 }
 
 // Returns Oracle predictions for all of today's scheduled matches.
@@ -115,14 +120,9 @@ function getTodayPredictions(userId) {
 
 // ─── Betting ──────────────────────────────────────────────────────────────────
 
-function submitOracleBet(userId, { match_id, picked_winner_id, sided_with }) {
-  const VALID_SIDES = ['algorithm', 'ai', 'both', 'neither'];
-
-  if (!match_id || !picked_winner_id || !sided_with) {
-    throw createError('match_id, picked_winner_id, and sided_with are required.', 400);
-  }
-  if (!VALID_SIDES.includes(sided_with)) {
-    throw createError('Invalid sided_with value.', 400);
+function submitOracleBet(userId, { match_id, picked_winner_id }) {
+  if (!match_id || !picked_winner_id) {
+    throw createError('match_id and picked_winner_id are required.', 400);
   }
 
   const match = db.prepare(`
@@ -141,9 +141,15 @@ function submitOracleBet(userId, { match_id, picked_winner_id, sided_with }) {
     throw createError('picked_winner_id must be one of the two teams in this match.', 400);
   }
 
-  // Snapshot both predictions at the time of betting so scoring is always
-  // based on what was shown to the user, even if predictions refresh later.
+  // Snapshot both predictions at bet time so scoring always reflects what the user saw.
   const prediction = getOraclePrediction(Number(match_id), userId);
+
+  // Derive sided_with from AI agreement — used for display only (scoring uses ai_home/away_prob).
+  const aiPickedHome = prediction.ai?.home_prob != null && prediction.ai.home_prob > prediction.ai.away_prob;
+  const userPickedHome = winnerId === match.home_team_id;
+  const sidedWith = prediction.ai?.home_prob == null
+    ? 'no_ai'
+    : aiPickedHome === userPickedHome ? 'with_ai' : 'against_ai';
 
   db.prepare(`
     INSERT INTO oracle_bets
@@ -162,7 +168,7 @@ function submitOracleBet(userId, { match_id, picked_winner_id, sided_with }) {
     userId,
     Number(match_id),
     winnerId,
-    sided_with,
+    sidedWith,
     prediction.algorithm.home_prob,
     prediction.algorithm.away_prob,
     prediction.ai?.home_prob ?? null,
@@ -208,20 +214,4 @@ function getOracleAccuracy() {
     WHERE m.status = 'FINISHED' AND op.ai_home_prob IS NOT NULL
   `).get();
 
-  const toRecord = ({ wins, total }) => ({
-    wins:   wins   ?? 0,
-    losses: (total ?? 0) - (wins ?? 0),
-    total:  total  ?? 0,
-  });
-
-  return { algorithm: toRecord(algoStats), ai: toRecord(aiStats) };
-}
-
-module.exports = {
-  getOracleProfile,
-  saveOracleProfile,
-  getOraclePrediction,
-  getTodayPredictions,
-  submitOracleBet,
-  getOracleBet,
-  getOracleAccuracy
+  const toRecord = ({ wins, t

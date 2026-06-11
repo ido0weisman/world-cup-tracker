@@ -42,11 +42,12 @@ function Leaderboard() {
             <li><strong>Semi-finals —</strong> 20 pts for each correct match winner.</li>
             <li><strong>Final —</strong> 35 pts for the correct winner.</li>
             <li><strong>Top scorer —</strong> 50 pts if you predict both the player and their team correctly.</li>
-            <li><strong>🔮 Oracle Duel —</strong> awarded per match based on who you sided with:
+            <li><strong>🔮 Oracle Duel —</strong> points per correct match bet based on AI confidence:
               <ul style={{ marginTop: '0.4rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                <li>Both Oracles agreed, you took the safe pick → <strong>4 pts</strong> (Group/R32)</li>
-                <li>Oracles disagreed, you backed one correctly → <strong>6 pts</strong></li>
-                <li>Defied both Oracles and proved them wrong → <strong>10 pts</strong></li>
+                <li>AI ≥ 70% confident, you backed the AI → <strong>3 pts</strong> (Group/R32)</li>
+                <li>AI under 70% confident, you backed the AI → <strong>6 pts</strong></li>
+                <li>AI under 70% confident, you defied the AI → <strong>8 pts</strong></li>
+                <li>AI ≥ 70% confident, you defied the AI → <strong>12 pts</strong></li>
                 <li>Points scale up in later rounds.</li>
               </ul>
             </li>
@@ -74,7 +75,4 @@ function Leaderboard() {
           {data?.leaderboard?.map(row => (
             <div
               key={row.id}
-              className={`leaderboard__row ${row.id === user?.id ? 'leaderboard__row--me' : ''}`}
-            >
-              <span className="leaderboard__rank">
-       
+              className={`leaderboard__row ${row.id === user?.id ? 'leaderboar
