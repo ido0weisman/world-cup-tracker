@@ -71,7 +71,7 @@ async function fetchPredictionsForToday() {
     FROM   matches m
     JOIN   teams ht  ON m.home_team_id  = ht.id
     JOIN   teams awt ON m.away_team_id = awt.id
-    WHERE  DATE(m.match_date) = ? AND m.status IN ('SCHEDULED', 'LIVE', 'FINISHED')
+    WHERE  DATE(m.match_date) = ? AND m.status IN ('TIMED', 'SCHEDULED', 'IN_PLAY', 'LIVE', 'FINISHED')
   `).all(today);
 
   if (!matches.length) {

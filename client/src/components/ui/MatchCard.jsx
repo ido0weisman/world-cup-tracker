@@ -82,8 +82,9 @@ function formatDate(utcString, timezone) {
 // The DB only stores SCHEDULED/LIVE/FINISHED; we don't poll for live updates,
 // so if a match's kickoff was within the last 110 minutes we show LIVE locally.
 function computeDisplayStatus(match) {
-  if (match.status === 'FINISHED' || match.status === 'LIVE') return match.status;
-  if (match.status === 'SCHEDULED' && match.match_date) {
+  if (match.status === 'FINISHED' || match.status === 'LIVE' || match.status === 'IN_PLAY') return match.status;
+  // football-data.org uses 'TIMED' for upcoming matches (same as SCHEDULED)
+  if ((match.status === 'TIMED' || match.status === 'SCHEDULED') && match.match_date) {
     const kickoff = new Date(match.match_date).getTime();
     const now     = Date.now();
     if (now >= kickoff && now <= kickoff + 110 * 60 * 1000) return 'LIVE';
