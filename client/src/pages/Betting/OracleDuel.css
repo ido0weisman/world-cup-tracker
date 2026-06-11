@@ -86,56 +86,71 @@
 }
 
 .oracle-landing__sub {
-  color: rgba(255,255,255,0.5);
-  font-size: 1rem;
-  margin-bottom: 3rem;
+  color: rgba(255,255,255,0.55);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
 }
 
-.oracle-landing__options {
+/* ── Versus strip ─────────────────────────────────────────────────────────── */
+.oracle-landing__versus {
   display: flex;
-  gap: 1.25rem;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 0 auto 2.5rem;
+  max-width: 400px;
 }
 
-.oracle-landing__option {
-  width: 220px;
-  padding: 2rem 1.5rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255,255,255,0.1);
-  cursor: pointer;
+.oracle-landing__versus-side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  text-align: center;
-  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
-  background: none;
-  color: var(--color-white);
+  gap: 0.25rem;
+  flex: 1;
 }
 
-.oracle-landing__option--build {
-  background: rgba(245,197,24,0.07);
+.oracle-landing__versus-side strong {
+  font-size: 0.95rem;
+  font-weight: 800;
 }
-.oracle-landing__option--watch {
-  background: rgba(139,92,246,0.07);
+.oracle-landing__versus-side--algo strong { color: var(--color-gold); }
+.oracle-landing__versus-side--ai   strong { color: rgba(180,130,255,1); }
+
+.oracle-landing__versus-side em {
+  font-style: normal;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.35);
 }
 
-.oracle-landing__option:hover {
-  transform: translateY(-4px);
-}
-.oracle-landing__option--build:hover {
-  border-color: var(--color-gold);
-  box-shadow: 0 0 24px rgba(245,197,24,0.15);
-}
-.oracle-landing__option--watch:hover {
-  border-color: rgba(139,92,246,0.7);
-  box-shadow: 0 0 24px rgba(139,92,246,0.2);
+.oracle-landing__versus-divider {
+  font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
-.oracle-landing__option-icon { font-size: 2rem; }
-.oracle-landing__option strong { font-size: 1rem; font-weight: 700; }
-.oracle-landing__option p { font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+/* ── Single CTA button ────────────────────────────────────────────────────── */
+.oracle-landing__build-btn {
+  padding: 0.9rem 2.5rem;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-gold);
+  background: rgba(245,197,24,0.1);
+  color: var(--color-gold);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.oracle-landing__build-btn:hover {
+  background: rgba(245,197,24,0.18);
+  box-shadow: 0 0 28px rgba(245,197,24,0.2);
+  transform: translateY(-2px);
+}
+
+/* Keep old option classes around in case they're referenced elsewhere */
+.oracle-landing__options { display: none; }
+.oracle-landing__option  { display: none; }
 
 /* ── Oracle Builder ───────────────────────────────────────────────────────── */
 .oracle-builder {
@@ -878,7 +893,6 @@
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .oracle-duel-grid { grid-template-columns: 1fr; }
-  .oracle-landing__options { flex-direction: column; align-items: center; }
-  .oracle-landing__option  { width: 100%; max-width: 300px; }
+  .oracle-landing__explainer { max-width: 100%; }
   .duel-card__oracle-col { padding: 0.5rem 0.25rem; gap: 0.75rem; }
 }

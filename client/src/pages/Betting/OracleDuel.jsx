@@ -316,10 +316,12 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
         {verdictText}
       </p>
 
-      {/* Bet section */}
-      {!isFinished && !isLocked && !localBet && profile && (
+      {/* Bet section — visible until 1 hour before kickoff, even to change an existing bet */}
+      {!isFinished && !isLocked && profile && (
         <div className="duel-card__bet-section">
-          <p className="duel-card__bet-label">Who do you side with?</p>
+          <p className="duel-card__bet-label">
+            {localBet ? '🔄 Change your side:' : 'Who do you side with?'}
+          </p>
           <div className="duel-card__bet-buttons">
             {/* Pick a winner siding with Algorithm Oracle */}
             <button
@@ -366,10 +368,10 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
         </div>
       )}
 
-      {/* Existing bet display */}
+      {/* Existing bet — always shown once placed */}
       {localBet && (
         <div className="duel-card__existing-bet">
-          <span>Your bet: </span>
+          <span>{isLocked || isFinished ? 'Your bet: ' : 'Current: '}</span>
           <strong>{localBet.sided_with === 'algorithm' ? '⚙️ Your Oracle' : localBet.sided_with === 'ai' ? '🤖 Groq AI' : localBet.sided_with === 'both' ? '✅ Both Oracles' : '⚡ Defied Both'}</strong>
           {localBet.is_correct === 1 && <span className="duel-card__result duel-card__result--win"> ✓ Correct</span>}
           {localBet.is_correct === 0 && <span className="duel-card__result duel-card__result--loss"> ✗ Wrong</span>}
@@ -552,26 +554,31 @@ function InfoModal({ onClose }) {
 
 // ─── Landing screen (first visit) ────────────────────────────────────────────
 
-function OracleLanding({ onBuild, onWatch }) {
+function OracleLanding({ onBuild }) {
   return (
     <div className="oracle-landing">
       <div className="oracle-landing__glow" />
-      <h1 className="oracle-landing__title">⚔️ Oracle Duel</h1>
+      <h1 className="oracle-landing__title">🔮 Oracle Duel</h1>
       <p className="oracle-landing__sub">
-        Two Oracles. One truth. Who sees the future?
+        Answer 3 questions to build your prediction algorithm.<br />
+        It battles Groq AI on every match — pick a side, earn points.
       </p>
-      <div className="oracle-landing__options">
-        <button className="oracle-landing__option oracle-landing__option--build" onClick={onBuild}>
-          <span className="oracle-landing__option-icon">⚙️</span>
-          <strong>Build Your Oracle</strong>
-          <p>Tune your algorithm and battle the AI</p>
-        </button>
-        <button className="oracle-landing__option oracle-landing__option--watch" onClick={onWatch}>
-          <span className="oracle-landing__option-icon">👁️</span>
-          <strong>Watch the Duel</strong>
-          <p>See predictions without your own Oracle</p>
-        </button>
+
+      <div className="oracle-landing__versus">
+        <span className="oracle-landing__versus-side oracle-landing__versus-side--algo">
+          ⚙️ <strong>Your Oracle</strong>
+          <em>built by you</em>
+        </span>
+        <span className="oracle-landing__versus-divider">⚡</span>
+        <span className="oracle-landing__versus-side oracle-landing__versus-side--ai">
+          🤖 <strong>Groq AI</strong>
+          <em>independent AI</em>
+        </span>
       </div>
+
+      <button className="oracle-landing__build-btn" onClick={onBuild}>
+        ⚙️ Build Your Oracle
+      </button>
     </div>
   );
 }
@@ -664,13 +671,7 @@ function OracleDuel() {
         <button className="betting-back" onClick={() => navigate('/betting')}>
           ← Predictions Hub
         </button>
-        <OracleLanding
-          onBuild={() => setView('builder')}
-          onWatch={async () => {
-            await loadDuelData();
-            setView('duel');
-          }}
-        />
+        <OracleLanding onBuild={() => setView('builder')} />
       </div>
     );
   }
