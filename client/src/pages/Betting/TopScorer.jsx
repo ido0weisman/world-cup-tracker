@@ -9,9 +9,7 @@ import { useToast } from '../../context/ToastContext';
 import './Betting.css';
 import './TopScorer.css';
 
-// Locks 1 hour before the tournament's opening match (Mexico vs. South Africa,
-// Estadio Azteca, kickoff 19:00 UTC on 11 June 2026).
-const LOCK_DATE = new Date('2026-06-11T18:00:00Z');
+const LOCK_DATE = new Date('2026-06-13T14:00:00Z');
 const isLocked  = () => new Date() > LOCK_DATE;
 
 // Position display labels + order
@@ -103,7 +101,7 @@ function TopScorer() {
       <button className="betting-back" onClick={() => navigate('/betting')}>← Back</button>
       <h1 className="ts-title">⚽ Top Scorer Prediction</h1>
       <p className="ts-sub">
-        Pick the player you think will score the most goals. Locks June 11, 2026 — 1 hour before the opening match.
+        Pick the player you think will score the most goals. Locks June 13, 2026.
       </p>
 
       {/* Current pick banner */}

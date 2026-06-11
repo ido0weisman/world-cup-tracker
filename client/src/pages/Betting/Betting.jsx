@@ -11,7 +11,7 @@ const TILES = [
     path:    'groups',
     icon:    '📊',
     title:   'Group Stage',
-    desc:    'Pick 2 teams per group to advance. Locks June 11, 1hr before kickoff.',
+    desc:    'Pick 2 teams per group to advance. Locks June 13.',
     color:   '#1a6b3c',
   },
   {
@@ -25,7 +25,7 @@ const TILES = [
     path:    'top-scorer',
     icon:    '⚽',
     title:   'Top Scorer',
-    desc:    'Pick the player who will score the most goals. Locks June 11, 1hr before kickoff.',
+    desc:    'Pick the player who will score the most goals. Locks June 13.',
     color:   '#6b1a1a',
   },
   {
@@ -39,7 +39,7 @@ const TILES = [
     path:    'leaderboard',
     icon:    '🏅',
     title:   'Leaderboard',
-    desc:    'See the top 25 predictors and where you rank.',
+    desc:    'See the top 10 predictors and where you rank.',
     color:   '#5a1a6b',
   },
 ];

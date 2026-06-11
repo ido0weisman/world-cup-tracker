@@ -266,7 +266,7 @@ function getLeaderboard() {
     ) ob ON u.id = ob.user_id
 
     ORDER BY total_points DESC, u.full_name ASC
-    LIMIT 25
+    LIMIT 10
   `).all();
 
   return rows.map((row, index) => ({ rank: index + 1, ...row }));
