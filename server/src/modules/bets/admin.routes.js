@@ -36,6 +36,26 @@ router.post('/top-scorer', adminGuard, (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// DELETE /api/admin/user?email=... — delete a single user and all their data
+router.delete('/user', adminGuard, (req, res, next) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: 'email query param required.' });
+
+    const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    db.prepare('DELETE FROM oracle_bets              WHERE user_id = ?').run(user.id);
+    db.prepare('DELETE FROM oracle_profiles          WHERE user_id = ?').run(user.id);
+    db.prepare('DELETE FROM predictions_top_scorer   WHERE user_id = ?').run(user.id);
+    db.prepare('DELETE FROM predictions_knockout     WHERE user_id = ?').run(user.id);
+    db.prepare('DELETE FROM predictions_group        WHERE user_id = ?').run(user.id);
+    db.prepare('DELETE FROM users                    WHERE id      = ?').run(user.id);
+
+    res.json({ message: `User ${email} deleted.` });
+  } catch (err) { next(err); }
+});
+
 // DELETE /api/admin/users — wipe all users and their predictions
 router.delete('/users', adminGuard, (req, res, next) => {
   try {
