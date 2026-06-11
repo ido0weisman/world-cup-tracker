@@ -71,11 +71,11 @@ async function fetchPredictionsForToday() {
     FROM   matches m
     JOIN   teams ht  ON m.home_team_id  = ht.id
     JOIN   teams awt ON m.away_team_id = awt.id
-    WHERE  DATE(m.match_date) = ? AND m.status IN ('SCHEDULED', 'LIVE')
+    WHERE  DATE(m.match_date) = ? AND m.status IN ('SCHEDULED', 'LIVE', 'FINISHED')
   `).all(today);
 
   if (!matches.length) {
-    console.log('[Oracle] No scheduled matches today — skipping prediction fetch.');
+    console.log('[Oracle] No matches found for today — skipping prediction fetch.');
     return;
   }
 

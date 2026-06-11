@@ -297,7 +297,7 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
           ) : (
             <div className="duel-card__ai-pending">
               ⏳ Prediction pending
-              <span>Runs nightly at 22:00 UTC</span>
+              <span>Runs nightly at 06:00 UTC</span>
             </div>
           )}
         </div>

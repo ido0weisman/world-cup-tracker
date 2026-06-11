@@ -49,6 +49,16 @@ router.delete('/users', adminGuard, (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/admin/debug-matches — return raw match rows to diagnose oracle issues
+router.get('/debug-matches', adminGuard, (req, res, next) => {
+  try {
+    const rows = db.prepare(
+      'SELECT id, match_date, status FROM matches ORDER BY match_date LIMIT 20'
+    ).all();
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
 // POST /api/admin/oracle-refresh — manually trigger today's Oracle prediction fetch
 // Useful right after setting GROQ_API_KEY or to re-run after a Groq failure.
 router.post('/oracle-refresh', adminGuard, async (req, res, next) => {
