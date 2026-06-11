@@ -22,6 +22,7 @@ const apiClient = axios.create({
 const TEAM_NAME_OVERRIDES = {
   'Bosnia and Herzegovina': 'Bosnia',
   'Bosnia-Herzegovina':     'Bosnia',
+  'Cape Verde Islands':     'Cape Verde',
 };
 
 function shortenTeamName(name) {

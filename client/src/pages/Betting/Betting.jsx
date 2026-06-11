@@ -29,18 +29,18 @@ const TILES = [
     color:   '#6b1a1a',
   },
   {
-    path:    'leaderboard',
-    icon:    '🏅',
-    title:   'Leaderboard',
-    desc:    'See the top 25 predictors and where you rank.',
-    color:   '#5a1a6b',
-  },
-  {
     path:    'oracle',
     icon:    '🔮',
     title:   'Oracle Duel',
     desc:    'Build your own Oracle and battle an AI. Who sees the future?',
     color:   '#2d1a6b',
+  },
+  {
+    path:    'leaderboard',
+    icon:    '🏅',
+    title:   'Leaderboard',
+    desc:    'See the top 25 predictors and where you rank.',
+    color:   '#5a1a6b',
   },
 ];
 

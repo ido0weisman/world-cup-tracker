@@ -19,6 +19,16 @@
 
 @media (max-width: 600px) { .betting-tiles { grid-template-columns: 1fr; } }
 
+.betting-tile:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - 0.625rem);
+}
+
+@media (max-width: 600px) {
+  .betting-tile:last-child:nth-child(odd) { width: 100%; }
+}
+
 .betting-tile {
   background: color-mix(in srgb, var(--tile-color) 40%, rgba(13,27,42,0.85));
   border: 1px solid rgba(255,255,255,0.08);
