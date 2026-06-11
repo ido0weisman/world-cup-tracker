@@ -19,7 +19,7 @@ function Leaderboard() {
 
       <div className="leaderboard__title-row">
         <h1 style={{ color: 'var(--color-gold)', fontSize: '1.8rem', fontWeight: 800, margin: 0 }}>
-          🏅 Leaderboard
+          🏅 Leaderboard — TOP 10
         </h1>
         <button
           type="button"
@@ -63,7 +63,6 @@ function Leaderboard() {
 
       {!loading && !error && (
         <div className="leaderboard">
-          <p className="leaderboard__top10-note">Showing the top 10 players by total points</p>
           <div className="leaderboard__header-row">
             <span>#</span>
             <span>Player</span>
