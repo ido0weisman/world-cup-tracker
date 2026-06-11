@@ -31,9 +31,9 @@ const SCORING = {
   // sided_with = 'algorithm' or 'ai' → base × 1.2  (e.g. 5 × 1.2 = 6 pts)
   // sided_with = 'both'              → base × 1.4  (e.g. 5 × 1.4 = 7 pts)
   // sided_with = 'neither'           → base × 2.0  (e.g. 5 × 2.0 = 10 pts)
-  ORACLE_WITH_WINNER:     1.2,
-  ORACLE_BOTH_AGREED:     1.4,
-  ORACLE_DEFY_BOTH:       2.0,
+  ORACLE_WITH_WINNER:     1.2,  // oracles disagreed, you backed one correctly  → 6 pts (base 5)
+  ORACLE_BOTH_AGREED:     0.8,  // both agreed, you took the safe consensus pick → 4 pts (base 5)
+  ORACLE_DEFY_BOTH:       2.0,  // defied both oracles and proved them wrong     → 10 pts (base 5)
 };
 
 // Betting lock rules

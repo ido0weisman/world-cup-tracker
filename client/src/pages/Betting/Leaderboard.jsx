@@ -44,10 +44,10 @@ function Leaderboard() {
             <li><strong>Top scorer —</strong> 50 pts if you predict both the player and their team correctly.</li>
             <li><strong>🔮 Oracle Duel —</strong> awarded per match based on who you sided with:
               <ul style={{ marginTop: '0.4rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                <li>Back Your Oracle and it was right → <strong>6 pts</strong> (Group/R32)</li>
-                <li>Both Oracles agreed and you sided with them → <strong>7 pts</strong></li>
+                <li>Both Oracles agreed, you took the safe pick → <strong>4 pts</strong> (Group/R32)</li>
+                <li>Oracles disagreed, you backed one correctly → <strong>6 pts</strong></li>
                 <li>Defied both Oracles and proved them wrong → <strong>10 pts</strong></li>
-                <li>Points scale up in later rounds (QF=14/17/24, SF=24/28/40, Final=42/49/70).</li>
+                <li>Points scale up in later rounds.</li>
               </ul>
             </li>
           </ul>

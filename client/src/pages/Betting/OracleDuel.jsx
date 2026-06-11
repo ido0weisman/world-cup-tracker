@@ -334,7 +334,7 @@ function MatchDuelCard({ item, existingBet, onBetPlaced, profile }) {
               }}
             >
               ⚙️ Back Your Oracle
-              <span className="duel-card__bet-pts">{oraclePts(match.stage, bothAgree ? 1.4 : 1.2)} pts</span>
+              <span className="duel-card__bet-pts">{oraclePts(match.stage, bothAgree ? 0.8 : 1.2)} pts</span>
             </button>
 
             {aiPred && !bothAgree && (
@@ -506,12 +506,12 @@ function InfoModal({ onClose }) {
           <h3 className="oracle-info-section__title">⚡ Points Per Correct Bet</h3>
           <div className="oracle-info-scoring">
             <div className="oracle-info-score">
-              <span className="oracle-info-score__mult oracle-info-score__mult--algo">6 pts</span>
-              <span>Sided with your Oracle — and it was right (Group / R32)</span>
+              <span className="oracle-info-score__mult oracle-info-score__mult--agree">4 pts</span>
+              <span>Both Oracles agreed — you took the safe pick (Group / R32)</span>
             </div>
             <div className="oracle-info-score">
-              <span className="oracle-info-score__mult oracle-info-score__mult--agree">7 pts</span>
-              <span>Both Oracles agreed — you sided with them (Group / R32)</span>
+              <span className="oracle-info-score__mult oracle-info-score__mult--algo">6 pts</span>
+              <span>Oracles disagreed — you backed one and it was right (Group / R32)</span>
             </div>
             <div className="oracle-info-score">
               <span className="oracle-info-score__mult oracle-info-score__mult--defy">10 pts</span>
