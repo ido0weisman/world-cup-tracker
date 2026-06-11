@@ -6,5 +6,8 @@ node_modules/
 dist/
 .DS_Store
 
+# FUSE filesystem temp files (created by Linux mount layer, never source code)
+.fuse_hidden*
+
 # Private planning doc — kept local only
 MASTER_PLAN.md
