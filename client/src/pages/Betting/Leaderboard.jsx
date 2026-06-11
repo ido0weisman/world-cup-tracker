@@ -63,6 +63,7 @@ function Leaderboard() {
 
       {!loading && !error && (
         <div className="leaderboard">
+          <p className="leaderboard__top10-note">Showing the top 10 players by total points</p>
           <div className="leaderboard__header-row">
             <span>#</span>
             <span>Player</span>
