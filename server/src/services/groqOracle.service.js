@@ -136,4 +136,4 @@ function initOracleCron() {
   console.log('[Oracle] Cron scheduled — daily predictions at 06:00 UTC.');
 }
 
-module.exports = { initOracleCron, fetchPredictionsForToday };
+module.exports = { initOracleCr

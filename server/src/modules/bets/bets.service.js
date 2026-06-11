@@ -273,7 +273,7 @@ function getLeaderboard() {
 }
 
 // Single-user version of the leaderboard query (no LIMIT) — lets the header
-// show "your points" even for users outside the top 25.
+// show "your points" even for users outside the top 10.
 function getUserScore(userId) {
   const row = db.prepare(`
     SELECT
@@ -327,30 +327,4 @@ function getUserScore(userId) {
       FROM predictions_top_scorer pts
       JOIN tournament_results tr_name ON tr_name.result_key = 'top_scorer_name'
         AND LOWER(pts.player_name) = LOWER(tr_name.result_value)
-      JOIN tournament_results tr_team ON tr_team.result_key = 'top_scorer_team_id'
-        AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
-    ) ts ON u.id = ts.user_id
-
-    LEFT JOIN (
-      SELECT user_id, SUM(points_awarded) AS oracle_points
-      FROM oracle_bets
-      WHERE is_correct IS NOT NULL
-      GROUP BY user_id
-    ) ob ON u.id = ob.user_id
-
-    WHERE u.id = ?
-  `).get(userId);
-
-  return row || { id: userId, total_points: 0, knockout_points: 0, group_points: 0, top_scorer_points: 0 };
-}
-
-module.exports = {
-  submitGroupBet,
-  getGroupBets,
-  submitKnockoutBet,
-  getKnockoutBets,
-  submitTopScorerBet,
-  getTopScorerBet,
-  getUserScore,
-  getLeaderboard,
-};
+      JOIN tournament_results tr_team ON tr_team.resu

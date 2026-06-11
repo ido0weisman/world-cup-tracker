@@ -231,6 +231,3 @@ async function initCacheService() {
   });
 
   console.log('[Cache] Scheduler started. Refreshing every 20 minutes.');
-}
-
-module.exports = { initCacheService };

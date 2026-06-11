@@ -155,14 +155,4 @@ function MatchCard({ match, isFavourite = false, onToggle }) {
             target="_blank"
             rel="noopener noreferrer"
             className="match-card__cal-btn"
-            onClick={e => e.stopPropagation()} // prevent favourite toggle when clicking calendar
-          >
-            🗓️ Add to Calendar
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default MatchCard;
+            onClick={e => e.stopPropagation()} // prevent favourite toggle when clicking cale

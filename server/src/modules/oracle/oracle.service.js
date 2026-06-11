@@ -224,5 +224,4 @@ module.exports = {
   getTodayPredictions,
   submitOracleBet,
   getOracleBet,
-  getOracleAccuracy,
-};
+  getOracleAccuracy

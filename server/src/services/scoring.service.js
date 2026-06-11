@@ -130,10 +130,4 @@ function scoreOracleBets() {
       }
 
       db.prepare(`
-        UPDATE oracle_bets SET is_correct = ?, points_awarded = ? WHERE id = ?
-      `).run(isCorrect, pointsAwarded, bet.id);
-    }
-  }
-}
-
-module.exports = { scoreKnockoutPredictions, setTopScorerResult, getTopScorerResult, scoreOracleBets };
+        UPDATE oracle_bets SET is_correct = ?, points_awarded = ? WHER
