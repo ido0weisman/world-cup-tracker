@@ -5,7 +5,6 @@ const { scoreKnockoutPredictions, scoreOracleBets } = require('./scoring.service
 
 const API_BASE = process.env.FOOTBALL_API_BASE_URL;
 const API_KEY = process.env.FOOTBALL_API_KEY;
-// World Cup 2026 competition ID on football-data.org (2000 = FIFA World Cup)
 const WC_COMPETITION_ID = 2000;
 
 const apiClient = axios.create({
@@ -13,12 +12,11 @@ const apiClient = axios.create({
   headers: { 'X-Auth-Token': API_KEY },
 });
 
-// ─── Display-name overrides ───────────────────────────────────────────────────
 // football-data.org returns some teams under their full formal names, which
-// are too long for the compact group-table layout (e.g. truncating into
-// near-illegible columns). Rather than truncate at render time, we shorten
-// the few known long outliers right when they're cached — this keeps the
-// data layer as the single source of truth and survives the 20-min refresh.
+// are too long for the compact group-table layout. Rather than truncate at
+// render time, we shorten known long outliers right when they are cached --
+// this keeps the data layer as the single source of truth and survives the
+// 20-min refresh.
 const TEAM_NAME_OVERRIDES = {
   'Bosnia and Herzegovina': 'Bosnia',
   'Bosnia-Herzegovina':     'Bosnia',
@@ -29,13 +27,10 @@ function shortenTeamName(name) {
   return TEAM_NAME_OVERRIDES[name] || name;
 }
 
-// ─── Core fetch & upsert logic ────────────────────────────────────────────────
-
 async function fetchAndCacheMatches() {
   try {
     const { data } = await apiClient.get(`/competitions/${WC_COMPETITION_ID}/matches`);
 
-    // Persist raw payload so the data survives a server restart
     db.prepare(`
       INSERT INTO api_cache (cache_key, payload, fetched_at)
       VALUES ('matches', ?, CURRENT_TIMESTAMP)
@@ -43,7 +38,6 @@ async function fetchAndCacheMatches() {
     `).run(JSON.stringify(data));
 
     upsertMatches(data.matches);
-    // Score any newly finished knockout matches immediately after updating
     scoreKnockoutPredictions();
     scoreOracleBets();
     console.log(`[Cache] Matches updated at ${new Date().toISOString()}`);
@@ -82,8 +76,6 @@ async function fetchAndCacheStandings() {
     console.error('[Cache] Failed to fetch standings:', err.message);
   }
 }
-
-// ─── Upsert helpers ───────────────────────────────────────────────────────────
 
 // node:sqlite has no built-in .transaction() helper, so we wrap batches
 // in explicit BEGIN/COMMIT blocks for atomicity and performance.
@@ -201,14 +193,11 @@ function upsertStandings(standings) {
   });
 }
 
-// ─── Stage normalizer ─────────────────────────────────────────────────────────
-
 function normalizeStage(apiStage) {
   const map = {
     'GROUP_STAGE':    'GROUP',
-    // football-data.org's actual World Cup 2026 stage codes (48-team format)
     'LAST_32':        'R32',
-    'ROUND_OF_32':    'R32',   // kept as a fallback alias, just in case
+    'ROUND_OF_32':    'R32',
     'LAST_16':        'R16',
     'ROUND_OF_16':    'R16',
     'QUARTER_FINALS': 'QF',
@@ -219,15 +208,15 @@ function normalizeStage(apiStage) {
   return map[apiStage] || apiStage;
 }
 
-// ─── Startup + scheduler ──────────────────────────────────────────────────────
-
 async function initCacheService() {
   console.log('[Cache] Running initial data fetch...');
   await Promise.all([fetchAndCacheMatches(), fetchAndCacheStandings(), fetchAndCacheTeamSquads()]);
 
-  // Refresh every 20 minutes regardless of how many users are active
   cron.schedule('*/20 * * * *', async () => {
     await Promise.all([fetchAndCacheMatches(), fetchAndCacheStandings()]);
   });
 
   console.log('[Cache] Scheduler started. Refreshing every 20 minutes.');
+}
+
+module.exports = { initCacheService };

@@ -673,4 +673,58 @@ function OracleDuel() {
     );
   }
 
-  // ── Duel screen ──────
+  // ── Duel screen ─────────────────────────────────────────────────────────────
+  return (
+    <div className="oracle-page">
+      {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
+
+      <div className="oracle-page__header">
+        <button className="betting-back" onClick={() => navigate('/betting')}>
+          ← Predictions Hub
+        </button>
+        <div className="oracle-page__header-right">
+          <button className="oracle-info-btn" onClick={() => setShowInfo(true)} title="How it works">
+            ?
+          </button>
+          <button className="btn btn--outline oracle-page__rebuild" onClick={() => setView('builder')}>
+            ⚙️ {profile ? 'Rebuild Oracle' : 'Build Your Oracle'}
+          </button>
+        </div>
+      </div>
+
+      <h1 className="oracle-page__title">⚔️ Oracle Duel</h1>
+      {profile && (
+        <p className="oracle-page__sub">
+          Your Oracle: <strong>{profile.oracle_name}</strong>
+        </p>
+      )}
+
+      {error && <p className="oracle-page__error">{error}</p>}
+
+      {predictions.length === 0 && !error && (
+        <div className="oracle-page__empty">
+          <p>😴 No matches scheduled today.</p>
+          <p>Check back on match days for Oracle predictions.</p>
+        </div>
+      )}
+
+      <div className="oracle-duel-grid">
+        {predictions.map(item => (
+          <MatchDuelCard
+            key={item.match.id}
+            item={item}
+            profile={profile}
+            existingBet={bets[item.match.id] ?? null}
+            onBetPlaced={loadDuelData}
+          />
+        ))}
+      </div>
+
+      {accuracy && (
+        <AccuracyTracker accuracy={accuracy} profileName={profile?.oracle_name} />
+      )}
+    </div>
+  );
+}
+
+export default OracleDuel;

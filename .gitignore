@@ -9,5 +9,6 @@ dist/
 # FUSE filesystem temp files (created by Linux mount layer, never source code)
 .fuse_hidden*
 
-# Private planning doc — kept local only
+# Private planning docs — kept local only
 MASTER_PLAN.md
+CODE_REVIEW_HANDOFF.md

@@ -3,8 +3,6 @@ const db                     = require('../config/db');
 const { computeProbability } = require('./algorithmOracle.service');
 const { DEFAULT_WEIGHT_PROFILE } = require('./oracleWeights.service');
 
-// ─── Groq API call ────────────────────────────────────────────────────────────
-
 // Asks Groq (Llama 3.3) to predict the win probability for a single match.
 // Low temperature keeps responses structured and consistent.
 async function fetchGroqPrediction(match) {
@@ -15,7 +13,7 @@ async function fetchGroqPrediction(match) {
     `You are a football analyst for the 2026 FIFA World Cup.\n` +
     `Predict win probabilities for this match. Consider team quality, current form, and head-to-head history.\n` +
     `Respond ONLY with valid JSON in this exact format: {"home_prob": <integer>, "away_prob": <integer>}\n` +
-    `The two numbers must sum to exactly 100. No extra text, no explanation — just JSON.\n\n` +
+    `The two numbers must sum to exactly 100. No extra text, no explanation -- just JSON.\n\n` +
     `Match: ${match.home_team_name} vs ${match.away_team_name}\n` +
     `Stage: ${match.stage}\n` +
     `Date: ${match.match_date}`;
@@ -29,7 +27,7 @@ async function fetchGroqPrediction(match) {
     body: JSON.stringify({
       model:       'llama-3.3-70b-versatile',
       messages:    [{ role: 'user', content: prompt }],
-      temperature: 0.3,  // low = deterministic, structured output
+      temperature: 0.3,
       max_tokens:  60,
     }),
   });
@@ -48,22 +46,25 @@ async function fetchGroqPrediction(match) {
     throw new Error(`Unexpected Groq response shape: ${content}`);
   }
 
-  // Normalize so they always sum to exactly 100
+  // Normalize so they always sum to exactly 100.
+  // Guard against division-by-zero if Groq returns two zeros.
   const total = parsed.home_prob + parsed.away_prob;
+  if (total <= 0) throw new Error(`Groq returned zero-sum probabilities: ${content}`);
+
   return {
     home_prob: Math.round((parsed.home_prob / total) * 100),
     away_prob: Math.round((parsed.away_prob / total) * 100),
   };
 }
 
-// ─── Daily prediction fetch ───────────────────────────────────────────────────
-
 // Computes algorithm predictions (default weights) and fetches Groq predictions
 // for all scheduled matches today, then upserts both into oracle_predictions.
-// Safe to call multiple times — ON CONFLICT overwrites stale rows.
+// Safe to call multiple times -- ON CONFLICT overwrites stale rows.
 async function fetchPredictionsForToday() {
   const today = new Date().toISOString().split('T')[0];
 
+  // Exclude FINISHED and in-progress matches -- no point predicting a result
+  // that is already known, and overwriting snapshots after the fact could corrupt scoring.
   const matches = db.prepare(`
     SELECT m.id, m.match_date, m.stage,
            ht.id   AS home_team_id,  ht.name  AS home_team_name,
@@ -71,11 +72,11 @@ async function fetchPredictionsForToday() {
     FROM   matches m
     JOIN   teams ht  ON m.home_team_id  = ht.id
     JOIN   teams awt ON m.away_team_id = awt.id
-    WHERE  DATE(m.match_date) = ? AND m.status IN ('TIMED', 'SCHEDULED', 'IN_PLAY', 'LIVE', 'FINISHED')
+    WHERE  DATE(m.match_date) = ? AND m.status IN ('TIMED', 'SCHEDULED')
   `).all(today);
 
   if (!matches.length) {
-    console.log('[Oracle] No matches found for today — skipping prediction fetch.');
+    console.log('[Oracle] No matches found for today -- skipping prediction fetch.');
     return;
   }
 
@@ -92,10 +93,8 @@ async function fetchPredictionsForToday() {
   `);
 
   for (const match of matches) {
-    // Algorithm prediction uses the balanced default profile
     const algoPred = computeProbability(match, DEFAULT_WEIGHT_PROFILE);
 
-    // Groq prediction — if it fails for any match we still store the algorithm result
     let aiPred = null;
     try {
       aiPred = await fetchGroqPrediction(match);
@@ -115,9 +114,7 @@ async function fetchPredictionsForToday() {
   console.log(`[Oracle] Predictions stored for ${matches.length} match(es).`);
 }
 
-// ─── Cron initialisation ──────────────────────────────────────────────────────
-
-// Schedules the daily fetch at 06:00 UTC — 10 hours before the earliest WC 2026
+// Schedules the daily fetch at 06:00 UTC -- 10 hours before the earliest WC 2026
 // kickoff (16:00 UTC). This guarantees predictions are ready before any match
 // goes LIVE that day, regardless of time zone or schedule changes.
 function initOracleCron() {
@@ -128,12 +125,11 @@ function initOracleCron() {
     );
   });
 
-  // Run immediately so predictions are available the moment the server starts
   fetchPredictionsForToday().catch(err =>
     console.error('[Oracle] Startup fetch failed:', err.message)
   );
 
-  console.log('[Oracle] Cron scheduled — daily predictions at 06:00 UTC.');
+  console.log('[Oracle] Cron scheduled -- daily predictions at 06:00 UTC.');
 }
 
-module.exports = { initOracleCr
+module.exports = { initOracleCron, fetchPredictionsForToday };

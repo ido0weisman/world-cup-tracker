@@ -1,12 +1,10 @@
 const db = require('../config/db');
 const { SCORING } = require('../config/constants');
 
-// ─── Knockout Scoring ─────────────────────────────────────────────────────────
-
 // Called after every cache refresh.
 // Finds all FINISHED knockout matches with a known winner and marks every
 // prediction for that match as correct (1) or incorrect (0).
-// Only touches predictions where is_correct IS NULL — already-scored rows
+// Only touches predictions where is_correct IS NULL -- already-scored rows
 // are left alone so a re-run never overwrites correct data.
 function scoreKnockoutPredictions() {
   const finishedMatches = db.prepare(`
@@ -32,8 +30,6 @@ function scoreKnockoutPredictions() {
     }
   }
 }
-
-// ─── Top Scorer Result ────────────────────────────────────────────────────────
 
 // Called by the admin endpoint once the tournament ends and the top scorer
 // is officially confirmed. Stores the result so the leaderboard can award points.
@@ -65,8 +61,6 @@ function getTopScorerResult() {
   return { player_name: name.result_value, team_id: Number(teamId.result_value) };
 }
 
-// ─── Oracle Bet Scoring ───────────────────────────────────────────────────────
-
 // Called alongside scoreKnockoutPredictions after each cache refresh.
 // For every finished match with a known winner, finds all unscored oracle_bets
 // and awards points based on correctness + AI confidence at bet time.
@@ -82,12 +76,11 @@ function scoreOracleBets() {
   if (!finishedMatches.length) return;
 
   for (const match of finishedMatches) {
-    // Determine the actual winner (knockout has winner_team_id; group stage uses scores)
     let actualWinnerId = match.winner_team_id;
     if (!actualWinnerId && match.home_score != null && match.away_score != null) {
       if (match.home_score > match.away_score)      actualWinnerId = match.home_team_id;
       else if (match.away_score > match.home_score) actualWinnerId = match.away_team_id;
-      // draw → actualWinnerId stays null → all oracle bets on this match = incorrect
+      // draw -> actualWinnerId stays null -> all oracle bets on this match = incorrect
     }
 
     const unscoredBets = db.prepare(`
@@ -99,7 +92,6 @@ function scoreOracleBets() {
 
       let pointsAwarded = 0;
       if (isCorrect) {
-        // Base points scale with match stage — same as knockout predictions.
         const stagePoints = {
           GROUP: 5, R32: 5,
           R16: SCORING.R16_WINNER, QF: SCORING.QF_WINNER,
@@ -107,7 +99,7 @@ function scoreOracleBets() {
         }[match.stage] ?? 5;
 
         // Points depend on AI confidence, not oracle agreement.
-        // Confidence = max(home_prob, away_prob) — snapshotted on the bet at submit time.
+        // Confidence = max(home_prob, away_prob) -- snapshotted on the bet at submit time.
         const aiPickedHome   = bet.ai_home_prob != null && bet.ai_home_prob > bet.ai_away_prob;
         const userPickedHome = bet.picked_winner_id === match.home_team_id;
         const agreedWithAI   = bet.ai_home_prob != null && aiPickedHome === userPickedHome;
@@ -116,7 +108,7 @@ function scoreOracleBets() {
 
         let multiplier;
         if (bet.ai_home_prob == null) {
-          multiplier = 1.0; // No AI data — flat base points
+          multiplier = 1.0;
         } else if (highConfidence) {
           multiplier = agreedWithAI ? SCORING.ORACLE_HIGH_WITH_AI : SCORING.ORACLE_HIGH_AGAINST_AI;
         } else {
@@ -133,4 +125,4 @@ function scoreOracleBets() {
   }
 }
 
-module.exports = { scor
+module.exports = { scoreKnockoutPredictions, setTopScorerResult, getTopScorerResult, scoreOracleBets };

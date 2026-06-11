@@ -53,15 +53,17 @@ Open the link, register an account, and explore the matches, standings, and pred
 Two oracles go head-to-head predicting every match. You bet with or against them for bonus multipliers.
 
 - **Your Oracle** — Build your own prediction algorithm by distributing weight across three categories: team strength (FIFA rankings), recent form, and goals quality. Dozens of unique oracle personalities are generated from your choices.
-- **Groq AI Oracle** — A Groq-powered LLM predicts match outcomes independently each morning at 07:00 UTC.
+- **Groq AI Oracle** — A Groq-powered LLM predicts match outcomes independently each morning at 06:00 UTC.
 - **Glowing Orb UI** — Each oracle is visualised as a pulsing orb (gold = your algorithm, purple = AI) whose size scales with prediction confidence.
-- **Bet Mechanics** — Side with one oracle, both, or defy both for a 2× risk/reward multiplier.
+- **Bet Mechanics** — Side with one oracle, or defy both for a 2× risk/reward multiplier. Points scale from 4 pts (safe consensus pick) to 6 pts (duel winner) to 10 pts (defy both).
 - **Accuracy Tracker** — Win/loss record for each oracle updates as matches finish.
 
 ### 🔐 Auth & Profiles
 - Register / log in with JWT-based sessions
 - Personal profile page
 - Country-aware match times — displayed in the user's local timezone
+
+> **Security note:** JWTs are stored in `localStorage` rather than an `httpOnly` cookie. This is an accepted tradeoff for a portfolio project — it keeps the auth flow simple with no server-side cookie/CSRF handling. In a production app the upgrade path is to switch to `httpOnly` `SameSite=Strict` cookies and add a `/auth/refresh` endpoint.
 
 ### 📜 New Rules
 Interactive cards explaining the 2026 format changes: 48 teams, third-place group qualification, time-wasting rules, and more.
@@ -72,7 +74,7 @@ Interactive cards explaining the 2026 format changes: 48 teams, third-place grou
 
 **Caching layer** — React never calls the external API directly. A cron job fetches from football-data.org every 20 minutes and writes to SQLite. All client requests hit our own DB — fast, rate-limit-safe, and resilient to API downtime.
 
-**Oracle scheduling** — A second cron job runs at 07:00 UTC daily. It calls the Groq API for every match scheduled that day, and runs the algorithm oracle locally, upserting both predictions to the `oracle_predictions` table. If Groq fails for any match, the algorithm prediction is still stored and the page degrades gracefully.
+**Oracle scheduling** — A second cron job runs at 06:00 UTC daily. It calls the Groq API for every match scheduled that day, and runs the algorithm oracle locally, upserting both predictions to the `oracle_predictions` table. If Groq fails for any match, the algorithm prediction is still stored and the page degrades gracefully.
 
 **Client-side LIVE detection** — Rather than polling the backend, `MatchCard` computes a derived display status: if the current time falls within the 110-minute window after kickoff and the DB still says `SCHEDULED`, the card renders as LIVE automatically.
 

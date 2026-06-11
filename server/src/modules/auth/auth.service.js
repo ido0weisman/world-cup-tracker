@@ -5,17 +5,13 @@ const db = require('../../config/db');
 const SALT_ROUNDS = 12;
 const JWT_EXPIRY = '7d';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// Creates an error with an HTTP status code attached.
-// The global error handler reads err.statusCode to set the response status.
 function createError(message, statusCode) {
   const err = new Error(message);
   err.statusCode = statusCode;
   return err;
 }
 
-// Never send password_hash to the client — strip it here once, not at every call site.
+// Never send password_hash to the client.
 function sanitizeUser(user) {
   const { password_hash, ...safeUser } = user;
   return safeUser;
@@ -29,31 +25,43 @@ function signToken(user) {
   );
 }
 
-// ─── Validation ───────────────────────────────────────────────────────────────
-
 // Runs before any DB work so we fail fast on bad input.
-function validateRegistration({ full_name, email, age, gender, password }) {
+function validateRegistration({ full_name, email, age, gender, password, country, favorite_team }) {
   if (!full_name || full_name.trim().length === 0) {
     throw createError('Full name is required.', 400);
   }
+  if (full_name.trim().length > 100) {
+    throw createError('Full name must be 100 characters or fewer.', 400);
+  }
+  // RFC 5321 caps the full email address at 254 characters.
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw createError('A valid email address is required.', 400);
   }
-  if (!age || !Number.isInteger(Number(age)) || Number(age) <= 0) {
-    throw createError('Age must be a positive integer.', 400);
+  if (email.length > 254) {
+    throw createError('Email address must be 254 characters or fewer.', 400);
+  }
+  const numAge = Number(age);
+  if (!age || !Number.isInteger(numAge) || numAge < 1 || numAge > 120) {
+    throw createError('Age must be a whole number between 1 and 120.', 400);
   }
   if (!gender || !['male', 'female'].includes(gender.toLowerCase())) {
     throw createError('Gender must be "male" or "female".', 400);
   }
-  if (!password || password.length < 6 || password.length > 12) {
-    throw createError('Password must be between 6 and 12 characters.', 400);
+  // Max 72 chars matches bcrypt's hard byte limit — anything beyond is silently truncated,
+  // so a long password and its first 72 chars would hash identically. Cap it here.
+  if (!password || password.length < 8 || password.length > 72) {
+    throw createError('Password must be between 8 and 72 characters.', 400);
+  }
+  if (country && country.length > 100) {
+    throw createError('Country must be 100 characters or fewer.', 400);
+  }
+  if (favorite_team && favorite_team.length > 100) {
+    throw createError('Favourite team must be 100 characters or fewer.', 400);
   }
 }
 
-// ─── Service Functions ────────────────────────────────────────────────────────
-
 async function register({ full_name, email, age, gender, favorite_team, country, password }) {
-  validateRegistration({ full_name, email, age, gender, password });
+  validateRegistration({ full_name, email, age, gender, password, country, favorite_team });
 
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
   if (existing) {
@@ -62,18 +70,29 @@ async function register({ full_name, email, age, gender, favorite_team, country,
 
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-  const { lastInsertRowid } = db.prepare(`
-    INSERT INTO users (full_name, email, age, gender, favorite_team, country, password_hash)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    full_name.trim(),
-    email.toLowerCase(),
-    Number(age),
-    gender.toLowerCase(),
-    favorite_team || null,
-    country || null,
-    password_hash
-  );
+  let lastInsertRowid;
+  try {
+    ({ lastInsertRowid } = db.prepare(`
+      INSERT INTO users (full_name, email, age, gender, favorite_team, country, password_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      full_name.trim(),
+      email.toLowerCase(),
+      Number(age),
+      gender.toLowerCase(),
+      favorite_team || null,
+      country || null,
+      password_hash
+    ));
+  } catch (err) {
+    // The SELECT above is a fast path, but two concurrent registrations can both
+    // pass it and then race to INSERT. The UNIQUE constraint on email is the
+    // real guard — catch it here and return 409 rather than letting a raw 500 leak.
+    if (err.code === 'ERR_SQLITE_ERROR' && err.message.includes('UNIQUE constraint failed')) {
+      throw createError('An account with this email already exists.', 409);
+    }
+    throw err;
+  }
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(lastInsertRowid);
   const token = signToken(user);
@@ -90,7 +109,7 @@ async function login({ email, password }) {
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
 
   // Use a generic message for both "user not found" and "wrong password".
-  // Specific messages would let attackers enumerate valid emails.
+  // Specific messages would allow attackers to enumerate valid emails.
   if (!user) {
     throw createError('Invalid email or password.', 401);
   }
@@ -114,8 +133,7 @@ function getMe(userId) {
 
 // Lets a user update the two preferences that can change after signup:
 // their country (used to localize match kickoff times) and favourite team.
-// Both are optional/nullable — sending an empty value clears the field
-// (e.g. switching back to "no favourite team").
+// Both are optional/nullable — sending an empty value clears the field.
 function updateMe(userId, { country, favorite_team }) {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
   if (!user) {

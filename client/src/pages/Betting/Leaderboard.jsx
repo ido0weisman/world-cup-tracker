@@ -75,4 +75,26 @@ function Leaderboard() {
           {data?.leaderboard?.map(row => (
             <div
               key={row.id}
-              className={`leaderboard__row ${row.id === user?.id ? 'leaderboar
+              className={`leaderboard__row ${row.id === user?.id ? 'leaderboard__row--me' : ''}`}
+            >
+              <span className="leaderboard__rank">
+                {row.rank === 1 ? '🥇' : row.rank === 2 ? '🥈' : row.rank === 3 ? '🥉' : row.rank}
+              </span>
+              <span className="leaderboard__name">
+                {row.full_name}
+                {row.id === user?.id && <span className="leaderboard__you"> (You)</span>}
+              </span>
+              <span>{row.group_points}</span>
+              <span>{row.knockout_points}</span>
+              <span>{row.top_scorer_points}</span>
+              <span>{row.oracle_points}</span>
+              <span className="leaderboard__total">{row.total_points}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default Leaderboard;

@@ -2,6 +2,7 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const runMigrations = require('./db/migrate');
@@ -19,6 +20,16 @@ const oracleRoutes   = require('./modules/oracle/oracle.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Fly.io terminates TLS at its edge proxy and forwards requests with an
+// X-Forwarded-For header. `trust proxy = 1` tells Express to trust exactly
+// one proxy hop, so req.ip becomes the real client IP — without this, the
+// rate limiter would see every visitor as the proxy's IP and throttle them
+// all together. Trusting MORE hops than actually exist would let clients
+// spoof their IP via X-Forwarded-For, so the value is deliberately 1, not true.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 // ─── Rate Limiting ────────────────────────────────────────────────────────────
 // Protects against bot floods / abusive traffic spikes — caps how many
@@ -48,6 +59,25 @@ const authLimiter = rateLimit({
 
 // ─── Global Middleware ────────────────────────────────────────────────────────
 
+// helmet sets ~14 security headers in one call (X-Frame-Options, HSTS,
+// X-Content-Type-Options, etc.). CSP is the only directive we customise:
+// - styleSrc needs 'unsafe-inline' because Vite injects critical CSS as <style> tags
+// - imgSrc must whitelist crests.football-data.org for team badge images
+// - connectSrc 'self' covers the SPA's /api/* fetch calls in production
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:  ["'self'"],
+      scriptSrc:   ["'self'"],
+      styleSrc:    ["'self'", "'unsafe-inline'"],
+      imgSrc:      ["'self'", 'data:', 'https://crests.football-data.org'],
+      connectSrc:  ["'self'"],
+      fontSrc:     ["'self'"],
+      objectSrc:   ["'none'"],
+      frameSrc:    ["'none'"],
+    },
+  },
+}));
 app.use(cors({ origin: 'http://localhost:5173' })); // Vite's default dev port
 app.use(express.json());
 app.use('/api', apiLimiter);

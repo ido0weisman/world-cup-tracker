@@ -822,3 +822,121 @@
 /* ── The two oracle cards ─────────────────────────────────────────────────── */
 .oracle-info-oracles {
   display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.oracle-info-oracle {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.oracle-info-oracle--algo { background: rgba(245,197,24,0.05); }
+.oracle-info-oracle--ai   { background: rgba(139,92,246,0.05); }
+
+.oracle-info-oracle__icon { font-size: 1.5rem; flex-shrink: 0; }
+.oracle-info-oracle strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+.oracle-info-oracle--algo strong { color: var(--color-gold); }
+.oracle-info-oracle--ai   strong { color: rgba(180,130,255,1); }
+.oracle-info-oracle p {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Scoring ─────────────────────────────────────────────────────────────── */
+.oracle-info-scoring {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.oracle-info-score {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.oracle-info-score__mult {
+  font-size: 0.9rem;
+  font-weight: 900;
+  min-width: 3rem;
+  text-align: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+.oracle-info-score__mult--algo  { background: rgba(245,197,24,0.12);  color: var(--color-gold); }
+.oracle-info-score__mult--agree { background: rgba(16,185,129,0.12);  color: #6ee7b7; }
+.oracle-info-score__mult--defy  { background: rgba(220,38,38,0.12);   color: #fca5a5; }
+
+/* ── Names ────────────────────────────────────────────────────────────────── */
+.oracle-info-names-hint {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 1.25rem;
+}
+
+.oracle-info-names-group {
+  margin-bottom: 1.25rem;
+}
+
+.oracle-info-names-group__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 0.6rem;
+}
+.oracle-info-names-group__title span {
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+}
+
+.oracle-info-names-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem 0.75rem;
+}
+
+.oracle-info-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+}
+
+.oracle-info-name-row__name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-gold);
+}
+
+.oracle-info-name-row__tags {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.3);
+  line-height: 1.3;
+}
+
+@media (max-width: 500px) {
+  .oracle-info-names-grid { grid-template-columns: repeat(2, 1fr); }
+  .oracle-info-oracles    { flex-direction: column; }
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .oracle-duel-grid { grid-template-columns: 1fr; }
+  .oracle-landing__explainer { max-width: 100%; }
+  .duel-card__oracle-col { padding: 0.5rem 0.25rem; gap: 0.75rem; }
+}

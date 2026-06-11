@@ -33,8 +33,8 @@ function Register() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Enter a valid email.';
     if (!form.age || form.age < 1) return 'Enter a valid age.';
     if (!['male', 'female'].includes(form.gender)) return 'Select a gender.';
-    if (form.password.length < 6 || form.password.length > 12)
-      return 'Password must be 6–12 characters.';
+    if (form.password.length < 8 || form.password.length > 72)
+      return 'Password must be 8–72 characters.';
     return null;
   }
 
@@ -116,7 +116,7 @@ function Register() {
           </div>
 
           <div className="auth-form__field auth-form__field--full">
-            <label>Password <span className="auth-form__optional">(6–12 chars)</span></label>
+            <label>Password <span className="auth-form__optional">(8–72 chars)</span></label>
             <input type="password" name="password" value={form.password} onChange={handleChange} required />
           </div>
 

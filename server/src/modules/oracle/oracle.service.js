@@ -18,8 +18,6 @@ function assertMatchNotLocked(match) {
   }
 }
 
-// ─── Profile ──────────────────────────────────────────────────────────────────
-
 function getOracleProfile(userId) {
   return db.prepare('SELECT * FROM oracle_profiles WHERE user_id = ?').get(userId) ?? null;
 }
@@ -51,8 +49,6 @@ function saveOracleProfile(userId, { strength_card, market_card, upset_card }) {
   return { oracle_name: oracleName };
 }
 
-// ─── Predictions ──────────────────────────────────────────────────────────────
-
 function getOraclePrediction(matchId, userId) {
   const match = db.prepare(`
     SELECT m.*, ht.name AS home_team_name, awt.name AS away_team_name
@@ -64,10 +60,8 @@ function getOraclePrediction(matchId, userId) {
 
   if (!match) throw createError('Match not found.', 404);
 
-  // Groq AI prediction — retrieved from the daily-fetched table
   const stored = db.prepare('SELECT * FROM oracle_predictions WHERE match_id = ?').get(matchId);
 
-  // Algorithm prediction — personalised if user has built an Oracle, else use stored default
   let algorithmPred;
   if (userId) {
     const profile = getOracleProfile(userId);
@@ -87,7 +81,7 @@ function getOraclePrediction(matchId, userId) {
     ? { home_prob: stored.ai_home_prob, away_prob: stored.ai_away_prob }
     : null;
 
-  // Confidence = max prob — the UI uses this to show dynamic point tiers on bet buttons.
+  // Confidence = max prob -- the UI uses this to show dynamic point tiers on bet buttons.
   const ai_confidence = aiPred != null
     ? Math.max(aiPred.home_prob, aiPred.away_prob)
     : null;
@@ -95,7 +89,6 @@ function getOraclePrediction(matchId, userId) {
   return { match_id: matchId, algorithm: algorithmPred, ai: aiPred, ai_confidence };
 }
 
-// Returns Oracle predictions for all of today's scheduled matches.
 function getTodayPredictions(userId) {
   const today = new Date().toISOString().split('T')[0];
 
@@ -117,8 +110,6 @@ function getTodayPredictions(userId) {
     prediction: getOraclePrediction(m.id, userId),
   }));
 }
-
-// ─── Betting ──────────────────────────────────────────────────────────────────
 
 function submitOracleBet(userId, { match_id, picked_winner_id }) {
   if (!match_id || !picked_winner_id) {
@@ -144,7 +135,7 @@ function submitOracleBet(userId, { match_id, picked_winner_id }) {
   // Snapshot both predictions at bet time so scoring always reflects what the user saw.
   const prediction = getOraclePrediction(Number(match_id), userId);
 
-  // Derive sided_with from AI agreement — used for display only (scoring uses ai_home/away_prob).
+  // Derive sided_with from AI agreement -- used for display only (scoring uses ai_home/away_prob).
   const aiPickedHome = prediction.ai?.home_prob != null && prediction.ai.home_prob > prediction.ai.away_prob;
   const userPickedHome = winnerId === match.home_team_id;
   const sidedWith = prediction.ai?.home_prob == null
@@ -183,12 +174,8 @@ function getOracleBet(userId, matchId) {
     .get(userId, matchId) ?? null;
 }
 
-// ─── Accuracy ─────────────────────────────────────────────────────────────────
-
 // Compares stored predictions against actual match results for all finished
-// matches that have oracle_predictions rows. Both algorithm and AI are scored
-// independently — if the match had no winner (group stage draw) it counts
-// as a loss for both Oracles.
+// matches that have oracle_predictions rows.
 function getOracleAccuracy() {
   const algoStats = db.prepare(`
     SELECT
@@ -214,4 +201,21 @@ function getOracleAccuracy() {
     WHERE m.status = 'FINISHED' AND op.ai_home_prob IS NOT NULL
   `).get();
 
-  const toRecord = ({ wins, t
+  const toRecord = ({ wins, total }) => ({
+    wins:   wins   ?? 0,
+    losses: (total ?? 0) - (wins ?? 0),
+    total:  total  ?? 0,
+  });
+
+  return { algorithm: toRecord(algoStats), ai: toRecord(aiStats) };
+}
+
+module.exports = {
+  getOracleProfile,
+  saveOracleProfile,
+  getOraclePrediction,
+  getTodayPredictions,
+  submitOracleBet,
+  getOracleBet,
+  getOracleAccuracy,
+};

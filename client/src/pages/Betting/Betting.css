@@ -75,4 +75,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: rgba(255,255,255,0
+  color: rgba(255,255,255,0.5);
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color var(--transition);
+}
+.betting-back:hover { color: var(--color-gold); }

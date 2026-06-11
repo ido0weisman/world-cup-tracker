@@ -7,9 +7,7 @@ function createError(message, statusCode) {
   return err;
 }
 
-// ─── Lock Helpers ─────────────────────────────────────────────────────────────
-
-// HTTP 423 = Locked — semantically correct for "this resource is currently locked"
+// HTTP 423 = Locked -- semantically correct for "this resource is currently locked"
 function assertGroupStageOpen() {
   if (new Date() > new Date(LOCK.GROUP_STAGE_LOCK_DATE)) {
     throw createError('Group stage predictions are now closed.', 423);
@@ -29,8 +27,6 @@ function assertMatchNotLocked(match) {
   }
 }
 
-// ─── Group Stage Bets ─────────────────────────────────────────────────────────
-
 function submitGroupBet(userId, { group_name, team1_id, team2_id }) {
   assertGroupStageOpen();
 
@@ -49,7 +45,6 @@ function submitGroupBet(userId, { group_name, team1_id, team2_id }) {
     throw createError('One or both teams were not found in the specified group.', 404);
   }
 
-  // UPSERT — user can update their pick any time before the lock date
   db.prepare(`
     INSERT INTO predictions_group (user_id, group_name, team1_id, team2_id)
     VALUES (?, ?, ?, ?)
@@ -84,8 +79,6 @@ function getGroupBets(userId) {
   }));
 }
 
-// ─── Knockout Bets ────────────────────────────────────────────────────────────
-
 function submitKnockoutBet(userId, { match_id, predicted_winner_id }) {
   if (!match_id || !predicted_winner_id) {
     throw createError('match_id and predicted_winner_id are required.', 400);
@@ -97,7 +90,6 @@ function submitKnockoutBet(userId, { match_id, predicted_winner_id }) {
 
   assertMatchNotLocked(match);
 
-  // Winner must be one of the two teams playing
   const winnerId = Number(predicted_winner_id);
   if (winnerId !== match.home_team_id && winnerId !== match.away_team_id) {
     throw createError('predicted_winner_id must be one of the two teams in this match.', 400);
@@ -147,8 +139,6 @@ function getKnockoutBets(userId) {
   }));
 }
 
-// ─── Top Scorer Bet ───────────────────────────────────────────────────────────
-
 function submitTopScorerBet(userId, { team_id, player_name }) {
   assertGroupStageOpen();
 
@@ -189,9 +179,7 @@ function getTopScorerBet(userId) {
   };
 }
 
-// ─── Leaderboard ─────────────────────────────────────────────────────────────
-
-// All 3 point sources are computed live from source data — no pre-aggregated totals.
+// All 3 point sources are computed live from source data -- no pre-aggregated totals.
 // Group points update as standings change; knockout points update as matches finish;
 // top scorer points appear once the admin sets the tournament result.
 function getLeaderboard() {
@@ -210,7 +198,6 @@ function getLeaderboard() {
         + COALESCE(ob.oracle_points, 0) AS total_points
     FROM users u
 
-    -- Knockout: stage-weighted points for each correct prediction
     LEFT JOIN (
       SELECT pk.user_id,
         SUM(CASE WHEN pk.is_correct = 1 THEN
@@ -228,9 +215,6 @@ function getLeaderboard() {
       GROUP BY pk.user_id
     ) ko ON u.id = ko.user_id
 
-    -- Group: 5pts per predicted team currently sitting in position 1 or 2.
-    -- Only counts groups where at least one match has been played — prevents
-    -- pre-tournament seedings from awarding phantom points before kickoff.
     LEFT JOIN (
       SELECT pg.user_id,
         SUM(
@@ -247,7 +231,6 @@ function getLeaderboard() {
       GROUP BY pg.user_id
     ) gp ON u.id = gp.user_id
 
-    -- Top scorer: 20pts if player_name (case-insensitive) and team both match the stored result
     LEFT JOIN (
       SELECT pts.user_id, ${SCORING.TOP_SCORER} AS top_scorer_points
       FROM predictions_top_scorer pts
@@ -257,7 +240,6 @@ function getLeaderboard() {
         AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
     ) ts ON u.id = ts.user_id
 
-    -- Oracle: sum of points_awarded for all scored oracle bets
     LEFT JOIN (
       SELECT user_id, SUM(points_awarded) AS oracle_points
       FROM oracle_bets
@@ -272,7 +254,7 @@ function getLeaderboard() {
   return rows.map((row, index) => ({ rank: index + 1, ...row }));
 }
 
-// Single-user version of the leaderboard query (no LIMIT) — lets the header
+// Single-user version of the leaderboard query (no LIMIT) -- lets the header
 // show "your points" even for users outside the top 10.
 function getUserScore(userId) {
   const row = db.prepare(`
@@ -327,4 +309,30 @@ function getUserScore(userId) {
       FROM predictions_top_scorer pts
       JOIN tournament_results tr_name ON tr_name.result_key = 'top_scorer_name'
         AND LOWER(pts.player_name) = LOWER(tr_name.result_value)
-      JOIN tournament_results tr_team ON tr_team.resu
+      JOIN tournament_results tr_team ON tr_team.result_key = 'top_scorer_team_id'
+        AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
+    ) ts ON u.id = ts.user_id
+
+    LEFT JOIN (
+      SELECT user_id, SUM(points_awarded) AS oracle_points
+      FROM oracle_bets
+      WHERE is_correct IS NOT NULL
+      GROUP BY user_id
+    ) ob ON u.id = ob.user_id
+
+    WHERE u.id = ?
+  `).get(userId);
+
+  return row || { id: userId, total_points: 0, knockout_points: 0, group_points: 0, top_scorer_points: 0 };
+}
+
+module.exports = {
+  submitGroupBet,
+  getGroupBets,
+  submitKnockoutBet,
+  getKnockoutBets,
+  submitTopScorerBet,
+  getTopScorerBet,
+  getUserScore,
+  getLeaderboard,
+};
