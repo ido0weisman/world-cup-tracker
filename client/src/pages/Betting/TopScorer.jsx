@@ -2,15 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFetch } from '../../hooks/useFetch';
 import { getAllGroups } from '../../api/groups.api';
-import { getTopScorerBet, submitTopScorerBet } from '../../api/bets.api';
+import { getBettingConfig, getTopScorerBet, submitTopScorerBet } from '../../api/bets.api';
 import { getTeamSquad } from '../../api/squads.api';
 import Spinner from '../../components/ui/Spinner';
 import { useToast } from '../../context/ToastContext';
 import './Betting.css';
 import './TopScorer.css';
-
-const LOCK_DATE = new Date('2026-06-13T14:00:00Z');
-const isLocked  = () => new Date() > LOCK_DATE;
 
 // Position display labels + order
 const POSITION_LABELS = {
@@ -35,11 +32,13 @@ function groupByPosition(players) {
 
 function TopScorer() {
   const navigate = useNavigate();
-  const locked   = isLocked();
   const { addToast } = useToast();
 
   const { data: groupsData, loading: groupsLoading } = useFetch(getAllGroups);
   const { data: betData,    loading: betLoading }     = useFetch(getTopScorerBet);
+  // Lock state comes from the server — single source of truth for betting rules.
+  const { data: config,     loading: configLoading }  = useFetch(getBettingConfig);
+  const locked = config?.group_stage?.is_locked ?? false;
 
   const allTeams = (groupsData?.groups?.flatMap(g => g.standings.map(s => s.team)) ?? [])
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -92,7 +91,7 @@ function TopScorer() {
     }
   }
 
-  if (groupsLoading || betLoading) return <Spinner />;
+  if (groupsLoading || betLoading || configLoading) return <Spinner />;
 
   const grouped = groupByPosition(players);
 

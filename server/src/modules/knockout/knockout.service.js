@@ -1,9 +1,13 @@
 const db = require('../../config/db');
+const { getMatchLockInfo } = require('../../utils/matchLock');
 
 function formatMatch(row) {
   return {
     id:         row.id,
     match_date: row.match_date,
+    // lock_time + is_locked — computed server-side so the betting page
+    // doesn't re-derive the lock rule from its own constants
+    ...getMatchLockInfo(row.match_date),
     stadium:    row.stadium,
     city:       row.city,
     stage:      row.stage,
@@ -45,6 +49,10 @@ function getKnockoutBracket() {
 
   // Organise matches by stage so the frontend can render each round separately.
   // Stages are ordered from earliest to latest for easy iteration.
+  // NOTE: THIRD_PLACE is intentionally excluded from the bracket and the
+  // predictions game — it isn't part of the road to the title, so including
+  // it would clutter the bracket UI and the scoring rules for little value.
+  // Rows with that stage are silently skipped by the bucket check below.
   const bracket = { R32: [], R16: [], QF: [], SF: [], FINAL: [] };
 
   for (const row of rows) {

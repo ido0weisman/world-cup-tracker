@@ -78,7 +78,9 @@ app.use(helmet({
     },
   },
 }));
-app.use(cors({ origin: 'http://localhost:5173' })); // Vite's default dev port
+// In dev the Vite server runs on its own origin; in production Express serves
+// the build itself (same origin), so this header is effectively unused there.
+app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }));
 app.use(express.json());
 app.use('/api', apiLimiter);
 
@@ -98,6 +100,15 @@ app.use('/api/bets',    betsRoutes);
 app.use('/api/admin',   adminRoutes);
 app.use('/api/squads',  squadsRoutes);
 app.use('/api/oracle',  oracleRoutes);
+
+// Any /api request that reached this point matched none of the routers above.
+// Without this, the production catch-all below would answer unknown API URLs
+// with index.html — confusing for API consumers and for debugging. Express
+// matches middleware in registration order, so this MUST sit after all /api
+// routers and before the static catch-all.
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Not found: ${req.method} /api${req.path}` });
+});
 
 // ─── Production: serve the built React app ──────────────────────────────────
 // In production Express also serves the Vite build output — one server, one

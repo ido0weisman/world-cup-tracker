@@ -1,30 +1,12 @@
 const db = require('../../config/db');
-const { LOCK, SCORING } = require('../../config/constants');
+const { SCORING } = require('../../config/constants');
+const createError = require('../../utils/createError');
+const { assertGroupStageOpen, assertMatchNotLocked, getGroupStageLockInfo } = require('../../utils/matchLock');
 
-function createError(message, statusCode) {
-  const err = new Error(message);
-  err.statusCode = statusCode;
-  return err;
-}
-
-// HTTP 423 = Locked -- semantically correct for "this resource is currently locked"
-function assertGroupStageOpen() {
-  if (new Date() > new Date(LOCK.GROUP_STAGE_LOCK_DATE)) {
-    throw createError('Group stage predictions are now closed.', 423);
-  }
-}
-
-// Each knockout match locks independently, 1 hour before its own kickoff.
-function assertMatchNotLocked(match) {
-  const lockTime = new Date(
-    new Date(match.match_date).getTime() - LOCK.KNOCKOUT_LOCK_HOURS_BEFORE * 60 * 60 * 1000
-  );
-  if (new Date() >= lockTime) {
-    throw createError(
-      `Predictions for this match are closed (locks ${LOCK.KNOCKOUT_LOCK_HOURS_BEFORE}h before kickoff).`,
-      423
-    );
-  }
+// Exposed via GET /api/bets/config (public) — the client reads lock state
+// from here instead of hard-coding the lock date in each betting page.
+function getBettingConfig() {
+  return { group_stage: getGroupStageLockInfo() };
 }
 
 function submitGroupBet(userId, { group_name, team1_id, team2_id }) {
@@ -179,74 +161,88 @@ function getTopScorerBet(userId) {
   };
 }
 
-// All 3 point sources are computed live from source data -- no pre-aggregated totals.
-// Group points update as standings change; knockout points update as matches finish;
-// top scorer points appear once the admin sets the tournament result.
+// ─── Score Query (shared) ────────────────────────────────────────────────────
+
+// All 4 point sources are computed live from source data — no pre-aggregated
+// totals. Both the leaderboard and the single-user score endpoint are the SAME
+// query with different endings (ORDER/LIMIT vs WHERE), so the body lives here
+// once. Template values come from SCORING constants, never user input — safe
+// to interpolate. The subqueries:
+//   ko — knockout: stage-weighted points per correct prediction
+//   gp — group: points per predicted team currently in the top 2; the EXISTS
+//        guard skips groups with no matches played, so pre-tournament
+//        seedings can't award phantom points
+//   ts — top scorer: flat points when player name (case-insensitive) AND
+//        team both match the admin-stored result
+//   ob — oracle: sum of points_awarded across scored oracle bets
+const SCORE_QUERY_BASE = `
+  SELECT
+    u.id,
+    u.full_name,
+    u.favorite_team,
+    COALESCE(ko.knockout_points,  0) AS knockout_points,
+    COALESCE(gp.group_points,     0) AS group_points,
+    COALESCE(ts.top_scorer_points,0) AS top_scorer_points,
+    COALESCE(ob.oracle_points,    0) AS oracle_points,
+    COALESCE(ko.knockout_points,  0)
+      + COALESCE(gp.group_points, 0)
+      + COALESCE(ts.top_scorer_points, 0)
+      + COALESCE(ob.oracle_points, 0) AS total_points
+  FROM users u
+
+  LEFT JOIN (
+    SELECT pk.user_id,
+      SUM(CASE WHEN pk.is_correct = 1 THEN
+        CASE m.stage
+          WHEN 'R32'   THEN ${SCORING.R32_WINNER}
+          WHEN 'R16'   THEN ${SCORING.R16_WINNER}
+          WHEN 'QF'    THEN ${SCORING.QF_WINNER}
+          WHEN 'SF'    THEN ${SCORING.SF_WINNER}
+          WHEN 'FINAL' THEN ${SCORING.FINAL_WINNER}
+          ELSE 0
+        END
+      ELSE 0 END) AS knockout_points
+    FROM predictions_knockout pk
+    JOIN matches m ON pk.match_id = m.id
+    GROUP BY pk.user_id
+  ) ko ON u.id = ko.user_id
+
+  LEFT JOIN (
+    SELECT pg.user_id,
+      SUM(
+        CASE WHEN gs1.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END +
+        CASE WHEN gs2.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END
+      ) AS group_points
+    FROM predictions_group pg
+    JOIN group_standings gs1 ON pg.team1_id = gs1.team_id AND pg.group_name = gs1.group_name
+    JOIN group_standings gs2 ON pg.team2_id = gs2.team_id AND pg.group_name = gs2.group_name
+    WHERE EXISTS (
+      SELECT 1 FROM group_standings gs_check
+      WHERE gs_check.group_name = pg.group_name AND gs_check.played > 0
+    )
+    GROUP BY pg.user_id
+  ) gp ON u.id = gp.user_id
+
+  LEFT JOIN (
+    SELECT pts.user_id, ${SCORING.TOP_SCORER} AS top_scorer_points
+    FROM predictions_top_scorer pts
+    JOIN tournament_results tr_name ON tr_name.result_key = 'top_scorer_name'
+      AND LOWER(pts.player_name) = LOWER(tr_name.result_value)
+    JOIN tournament_results tr_team ON tr_team.result_key = 'top_scorer_team_id'
+      AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
+  ) ts ON u.id = ts.user_id
+
+  LEFT JOIN (
+    SELECT user_id, SUM(points_awarded) AS oracle_points
+    FROM oracle_bets
+    WHERE is_correct IS NOT NULL
+    GROUP BY user_id
+  ) ob ON u.id = ob.user_id
+`;
+
 function getLeaderboard() {
   const rows = db.prepare(`
-    SELECT
-      u.id,
-      u.full_name,
-      u.favorite_team,
-      COALESCE(ko.knockout_points,  0) AS knockout_points,
-      COALESCE(gp.group_points,     0) AS group_points,
-      COALESCE(ts.top_scorer_points,0) AS top_scorer_points,
-      COALESCE(ob.oracle_points,    0) AS oracle_points,
-      COALESCE(ko.knockout_points,  0)
-        + COALESCE(gp.group_points, 0)
-        + COALESCE(ts.top_scorer_points, 0)
-        + COALESCE(ob.oracle_points, 0) AS total_points
-    FROM users u
-
-    LEFT JOIN (
-      SELECT pk.user_id,
-        SUM(CASE WHEN pk.is_correct = 1 THEN
-          CASE m.stage
-            WHEN 'R32'   THEN ${SCORING.R32_WINNER}
-            WHEN 'R16'   THEN ${SCORING.R16_WINNER}
-            WHEN 'QF'    THEN ${SCORING.QF_WINNER}
-            WHEN 'SF'    THEN ${SCORING.SF_WINNER}
-            WHEN 'FINAL' THEN ${SCORING.FINAL_WINNER}
-            ELSE 0
-          END
-        ELSE 0 END) AS knockout_points
-      FROM predictions_knockout pk
-      JOIN matches m ON pk.match_id = m.id
-      GROUP BY pk.user_id
-    ) ko ON u.id = ko.user_id
-
-    LEFT JOIN (
-      SELECT pg.user_id,
-        SUM(
-          CASE WHEN gs1.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END +
-          CASE WHEN gs2.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END
-        ) AS group_points
-      FROM predictions_group pg
-      JOIN group_standings gs1 ON pg.team1_id = gs1.team_id AND pg.group_name = gs1.group_name
-      JOIN group_standings gs2 ON pg.team2_id = gs2.team_id AND pg.group_name = gs2.group_name
-      WHERE EXISTS (
-        SELECT 1 FROM group_standings gs_check
-        WHERE gs_check.group_name = pg.group_name AND gs_check.played > 0
-      )
-      GROUP BY pg.user_id
-    ) gp ON u.id = gp.user_id
-
-    LEFT JOIN (
-      SELECT pts.user_id, ${SCORING.TOP_SCORER} AS top_scorer_points
-      FROM predictions_top_scorer pts
-      JOIN tournament_results tr_name ON tr_name.result_key = 'top_scorer_name'
-        AND LOWER(pts.player_name) = LOWER(tr_name.result_value)
-      JOIN tournament_results tr_team ON tr_team.result_key = 'top_scorer_team_id'
-        AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
-    ) ts ON u.id = ts.user_id
-
-    LEFT JOIN (
-      SELECT user_id, SUM(points_awarded) AS oracle_points
-      FROM oracle_bets
-      WHERE is_correct IS NOT NULL
-      GROUP BY user_id
-    ) ob ON u.id = ob.user_id
-
+    ${SCORE_QUERY_BASE}
     ORDER BY total_points DESC, u.full_name ASC
     LIMIT 10
   `).all();
@@ -254,72 +250,11 @@ function getLeaderboard() {
   return rows.map((row, index) => ({ rank: index + 1, ...row }));
 }
 
-// Single-user version of the leaderboard query (no LIMIT) -- lets the header
+// Single-user version of the leaderboard query (no LIMIT) — lets the header
 // show "your points" even for users outside the top 10.
 function getUserScore(userId) {
   const row = db.prepare(`
-    SELECT
-      u.id,
-      u.full_name,
-      COALESCE(ko.knockout_points,  0) AS knockout_points,
-      COALESCE(gp.group_points,     0) AS group_points,
-      COALESCE(ts.top_scorer_points,0) AS top_scorer_points,
-      COALESCE(ob.oracle_points,    0) AS oracle_points,
-      COALESCE(ko.knockout_points,  0)
-        + COALESCE(gp.group_points, 0)
-        + COALESCE(ts.top_scorer_points, 0)
-        + COALESCE(ob.oracle_points, 0) AS total_points
-    FROM users u
-
-    LEFT JOIN (
-      SELECT pk.user_id,
-        SUM(CASE WHEN pk.is_correct = 1 THEN
-          CASE m.stage
-            WHEN 'R32'   THEN ${SCORING.R32_WINNER}
-            WHEN 'R16'   THEN ${SCORING.R16_WINNER}
-            WHEN 'QF'    THEN ${SCORING.QF_WINNER}
-            WHEN 'SF'    THEN ${SCORING.SF_WINNER}
-            WHEN 'FINAL' THEN ${SCORING.FINAL_WINNER}
-            ELSE 0
-          END
-        ELSE 0 END) AS knockout_points
-      FROM predictions_knockout pk
-      JOIN matches m ON pk.match_id = m.id
-      GROUP BY pk.user_id
-    ) ko ON u.id = ko.user_id
-
-    LEFT JOIN (
-      SELECT pg.user_id,
-        SUM(
-          CASE WHEN gs1.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END +
-          CASE WHEN gs2.position <= 2 THEN ${SCORING.GROUP_ADVANCE_PER_TEAM} ELSE 0 END
-        ) AS group_points
-      FROM predictions_group pg
-      JOIN group_standings gs1 ON pg.team1_id = gs1.team_id AND pg.group_name = gs1.group_name
-      JOIN group_standings gs2 ON pg.team2_id = gs2.team_id AND pg.group_name = gs2.group_name
-      WHERE EXISTS (
-        SELECT 1 FROM group_standings gs_check
-        WHERE gs_check.group_name = pg.group_name AND gs_check.played > 0
-      )
-      GROUP BY pg.user_id
-    ) gp ON u.id = gp.user_id
-
-    LEFT JOIN (
-      SELECT pts.user_id, ${SCORING.TOP_SCORER} AS top_scorer_points
-      FROM predictions_top_scorer pts
-      JOIN tournament_results tr_name ON tr_name.result_key = 'top_scorer_name'
-        AND LOWER(pts.player_name) = LOWER(tr_name.result_value)
-      JOIN tournament_results tr_team ON tr_team.result_key = 'top_scorer_team_id'
-        AND pts.team_id = CAST(tr_team.result_value AS INTEGER)
-    ) ts ON u.id = ts.user_id
-
-    LEFT JOIN (
-      SELECT user_id, SUM(points_awarded) AS oracle_points
-      FROM oracle_bets
-      WHERE is_correct IS NOT NULL
-      GROUP BY user_id
-    ) ob ON u.id = ob.user_id
-
+    ${SCORE_QUERY_BASE}
     WHERE u.id = ?
   `).get(userId);
 
@@ -327,6 +262,7 @@ function getUserScore(userId) {
 }
 
 module.exports = {
+  getBettingConfig,
   submitGroupBet,
   getGroupBets,
   submitKnockoutBet,

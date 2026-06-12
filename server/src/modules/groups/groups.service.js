@@ -1,4 +1,5 @@
 const db = require('../../config/db');
+const createError = require('../../utils/createError');
 
 // Converts flat JOIN rows into a grouped structure:
 // [ { group_name: 'Group A', standings: [...] }, ... ]
@@ -68,9 +69,7 @@ function getGroupByName(name) {
   `).all(groupName);
 
   if (rows.length === 0) {
-    const err = new Error(`Group "${name}" not found.`);
-    err.statusCode = 404;
-    throw err;
+    throw createError(`Group "${name}" not found.`, 404);
   }
 
   return groupRows(rows)[0];

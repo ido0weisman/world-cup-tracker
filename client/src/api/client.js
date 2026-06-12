@@ -32,7 +32,15 @@ apiClient.interceptors.response.use(
     const url = error.config?.url || '';
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
 
-    if (error.response?.status === 401 && !isAuthEndpoint) {
+    // GET /auth/me is the silent session probe AuthContext fires on app load.
+    // Its 401 just means "stored token expired" — AuthContext already clears
+    // it and renders the app as a guest. Redirecting here would bounce guests
+    // off public pages (home, schedule) for no reason; protected pages are
+    // covered separately by ProtectedRoute. PATCH /auth/me (profile save) is
+    // a real user action, so that one still redirects like everything else.
+    const isSessionProbe = url.includes('/auth/me') && error.config?.method === 'get';
+
+    if (error.response?.status === 401 && !isAuthEndpoint && !isSessionProbe) {
       localStorage.removeItem('wc2026_token');
       window.location.href = '/login';
     }

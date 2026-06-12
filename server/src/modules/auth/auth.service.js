@@ -1,15 +1,10 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../../config/db');
+const createError = require('../../utils/createError');
 
 const SALT_ROUNDS = 12;
 const JWT_EXPIRY = '7d';
-
-function createError(message, statusCode) {
-  const err = new Error(message);
-  err.statusCode = statusCode;
-  return err;
-}
 
 // Never send password_hash to the client.
 function sanitizeUser(user) {

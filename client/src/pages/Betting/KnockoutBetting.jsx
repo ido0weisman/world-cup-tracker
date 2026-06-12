@@ -12,12 +12,6 @@ import './Betting.css';
 import './KnockoutBetting.css';
 
 const STAGE_LABELS = { R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter Finals', SF: 'Semi Finals', FINAL: 'Final' };
-const LOCK_HOURS   = 1;
-
-function isMatchLocked(matchDate) {
-  const lockTime = new Date(new Date(matchDate).getTime() - LOCK_HOURS * 60 * 60 * 1000);
-  return new Date() >= lockTime;
-}
 
 function KnockoutMatchCard({ match, existingBet, preview, onSave }) {
   const { addToast } = useToast();
@@ -29,8 +23,9 @@ function KnockoutMatchCard({ match, existingBet, preview, onSave }) {
 
   // A pick only makes sense once both bracket slots are filled — until then
   // there's no team to select, so the card stays locked regardless of timing.
+  // is_locked is computed by the server (single source of the lock rule).
   const matchupKnown = Boolean(home && away);
-  const locked = !matchupKnown || isMatchLocked(match.match_date) || match.status === 'FINISHED';
+  const locked = !matchupKnown || match.is_locked || match.status === 'FINISHED';
 
   async function handlePick(teamId) {
     if (locked) return;
@@ -74,10 +69,23 @@ function KnockoutMatchCard({ match, existingBet, preview, onSave }) {
           const isWrong    = existingBet?.is_correct === 0 && isSelected;
 
           return (
+            // role/tabIndex/onKeyDown make the styled div behave like a real
+            // button for keyboard and screen-reader users; aria-pressed
+            // announces the selection state.
             <div
               key={team.id}
+              role="button"
+              tabIndex={locked ? -1 : 0}
+              aria-pressed={isSelected}
+              aria-disabled={locked}
               className={`ko-bet-team ${isSelected ? 'ko-bet-team--selected' : ''} ${isWinner ? 'ko-bet-team--correct' : ''} ${isWrong ? 'ko-bet-team--wrong' : ''} ${locked ? 'ko-bet-team--locked' : ''}`}
               onClick={() => handlePick(team.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handlePick(team.id);
+                }
+              }}
             >
               {team.flag_url && <img src={team.flag_url} alt={team.name} />}
               <span>{team.name}</span>
@@ -117,16 +125,14 @@ function KnockoutBetting() {
   return (
     <div>
       <button className="betting-back" onClick={() => navigate('/betting')}>← Back</button>
-      <h1 style={{ color: 'var(--color-gold)', fontSize: '1.8rem', fontWeight: 800, marginBottom: '0.4rem' }}>
-        🥊 Knockout Predictions
-      </h1>
-      <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.875rem' }}>
+      <h1 className="betting-page__title">🥊 Knockout Predictions</h1>
+      <p className="betting-page__sub">
         Pick the winner of each match. Each match locks 1 hour before kickoff.
       </p>
 
       {!hasMatches && (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'rgba(255,255,255,0.4)' }}>
-          <p style={{ fontSize: '3rem' }}>⏳</p>
+        <div className="betting-page__empty">
+          <p className="betting-page__empty-icon">⏳</p>
           <p>Knockout matches will appear here once the group stage ends.</p>
         </div>
       )}

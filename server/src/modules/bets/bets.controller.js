@@ -1,5 +1,11 @@
 const betsService = require('./bets.service');
 
+async function getBettingConfig(req, res, next) {
+  try {
+    res.json(betsService.getBettingConfig());
+  } catch (err) { next(err); }
+}
+
 async function submitGroupBet(req, res, next) {
   try {
     const result = betsService.submitGroupBet(req.user.userId, req.body);
@@ -57,6 +63,7 @@ async function getMyScore(req, res, next) {
 }
 
 module.exports = {
+  getBettingConfig,
   submitGroupBet,
   getGroupBets,
   submitKnockoutBet,

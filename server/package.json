@@ -5,7 +5,10 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src"
   },
   "dependencies": {
     "axios": "^1.7.2",
@@ -19,6 +22,10 @@
     "node-cron": "^3.0.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "@eslint/js": "^9.39.0",
+    "eslint": "^9.39.0",
+    "globals": "^16.0.0",
+    "nodemon": "^3.1.4",
+    "vitest": "^4.0.0"
   }
 }

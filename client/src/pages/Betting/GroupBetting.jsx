@@ -2,23 +2,18 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFetch } from '../../hooks/useFetch';
 import { getAllGroups } from '../../api/groups.api';
-import { getGroupBets, submitGroupBet } from '../../api/bets.api';
+import { getBettingConfig, getGroupBets, submitGroupBet } from '../../api/bets.api';
 import Spinner from '../../components/ui/Spinner';
 import { useToast } from '../../context/ToastContext';
 import './Betting.css';
 import './GroupBetting.css';
 
-// Extended lock date — gives LinkedIn visitors time to register and place picks.
-const LOCK_DATE = new Date('2026-06-13T14:00:00Z');
-const isLocked  = () => new Date() > LOCK_DATE;
-
-function GroupBettingCard({ group, existingBet, onSave }) {
+function GroupBettingCard({ group, existingBet, locked, onSave }) {
   const { addToast } = useToast();
   const [selected, setSelected] = useState(
     existingBet ? [existingBet.team1.id, existingBet.team2.id] : []
   );
   const [saving, setSaving] = useState(false);
-  const locked = isLocked();
 
   function toggleTeam(teamId) {
     if (locked) return;
@@ -27,7 +22,6 @@ function GroupBettingCard({ group, existingBet, onSave }) {
       if (prev.length >= 2)     return prev; // max 2
       return [...prev, teamId];
     });
-    setMessage('');
   }
 
   async function handleSave() {
@@ -51,10 +45,22 @@ function GroupBettingCard({ group, existingBet, onSave }) {
         {group.standings.map(row => {
           const isSelected = selected.includes(row.team.id);
           return (
+            // role/tabIndex/onKeyDown make the styled div behave like a real
+            // button for keyboard and screen-reader users.
             <div
               key={row.team.id}
+              role="button"
+              tabIndex={locked ? -1 : 0}
+              aria-pressed={isSelected}
+              aria-disabled={locked}
               className={`group-bet-card__team ${isSelected ? 'group-bet-card__team--selected' : ''} ${locked ? 'group-bet-card__team--locked' : ''}`}
               onClick={() => toggleTeam(row.team.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleTeam(row.team.id);
+                }
+              }}
             >
               {row.team.flag_url && <img src={row.team.flag_url} alt="" />}
               <span>{row.team.name}</span>
@@ -83,7 +89,9 @@ function GroupBettingCard({ group, existingBet, onSave }) {
 function GroupBetting() {
   const navigate = useNavigate();
   const { data: groupsData, loading: groupsLoading } = useFetch(getAllGroups);
-  const { data: betsData,   loading: betsLoading, refetch } = useFetch(getGroupBets);
+  const { data: betsData,   loading: betsLoading }   = useFetch(getGroupBets);
+  // Lock state comes from the server — single source of truth for betting rules.
+  const { data: config,     loading: configLoading } = useFetch(getBettingConfig);
 
   const [refresh, setRefresh] = useState(0);
   const onSave = () => setRefresh(r => r + 1);
@@ -91,7 +99,15 @@ function GroupBetting() {
   // Re-fetch bets after a save
   const { data: freshBets } = useFetch(getGroupBets, [refresh]);
 
-  if (groupsLoading || betsLoading) return <Spinner />;
+  if (groupsLoading || betsLoading || configLoading) return <Spinner />;
+
+  const locked   = config?.group_stage?.is_locked ?? false;
+  const lockDate = config?.group_stage?.lock_date
+    ? new Date(config.group_stage.lock_date).toLocaleString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short',
+      })
+    : null;
 
   const betsMap = {};
   (freshBets?.bets ?? betsData?.bets ?? []).forEach(b => { betsMap[b.group_name] = b; });
@@ -99,11 +115,9 @@ function GroupBetting() {
   return (
     <div>
       <button className="betting-back" onClick={() => navigate('/betting')}>← Back</button>
-      <h1 style={{ color: 'var(--color-gold)', fontSize: '1.8rem', fontWeight: 800, marginBottom: '0.4rem' }}>
-        📊 Group Stage Predictions
-      </h1>
-      <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.875rem' }}>
-        Pick 2 teams per group you think will advance. Locks June 13, 2026 at 14:00 UTC.
+      <h1 className="betting-page__title">📊 Group Stage Predictions</h1>
+      <p className="betting-page__sub">
+        Pick 2 teams per group you think will advance.{lockDate && ` Locks ${lockDate}.`}
       </p>
 
       <div className="group-bets-grid">
@@ -112,6 +126,7 @@ function GroupBetting() {
             key={group.group_name}
             group={group}
             existingBet={betsMap[group.group_name]}
+            locked={locked}
             onSave={onSave}
           />
         ))}

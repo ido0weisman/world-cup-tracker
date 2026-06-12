@@ -70,6 +70,28 @@
   margin-top: 0.5rem;
 }
 
+/* ── Shared sub-page header + empty state ─────────────────────────────────── */
+.betting-page__title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-gold);
+  margin-bottom: 0.4rem;
+}
+
+.betting-page__sub {
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 2rem;
+  font-size: 0.875rem;
+}
+
+.betting-page__empty {
+  text-align: center;
+  padding: 4rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.betting-page__empty-icon { font-size: 3rem; }
+
 /* ── Shared back button for sub-pages ─────────────────────────────────────── */
 .betting-back {
   display: inline-flex;

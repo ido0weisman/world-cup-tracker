@@ -1,22 +1,9 @@
 const db                     = require('../../config/db');
 const { buildWeightProfile, generateOracleName } = require('../../services/oracleWeights.service');
 const { computeProbability } = require('../../services/algorithmOracle.service');
-const { LOCK }               = require('../../config/constants');
-
-function createError(message, statusCode) {
-  const err = new Error(message);
-  err.statusCode = statusCode;
-  return err;
-}
-
-function assertMatchNotLocked(match) {
-  const lockTime = new Date(
-    new Date(match.match_date).getTime() - LOCK.KNOCKOUT_LOCK_HOURS_BEFORE * 60 * 60 * 1000
-  );
-  if (new Date() >= lockTime) {
-    throw createError('Oracle predictions are closed for this match.', 423);
-  }
-}
+const { getOraclePointTiers } = require('../../services/scoring.service');
+const createError            = require('../../utils/createError');
+const { getMatchLockInfo, assertMatchNotLocked } = require('../../utils/matchLock');
 
 function getOracleProfile(userId) {
   return db.prepare('SELECT * FROM oracle_profiles WHERE user_id = ?').get(userId) ?? null;
@@ -81,12 +68,17 @@ function getOraclePrediction(matchId, userId) {
     ? { home_prob: stored.ai_home_prob, away_prob: stored.ai_away_prob }
     : null;
 
-  // Confidence = max prob -- the UI uses this to show dynamic point tiers on bet buttons.
+  // Confidence = max prob — drives the point tiers below.
   const ai_confidence = aiPred != null
     ? Math.max(aiPred.home_prob, aiPred.away_prob)
     : null;
 
-  return { match_id: matchId, algorithm: algorithmPred, ai: aiPred, ai_confidence };
+  // Points are computed HERE, by the same function the scorer uses — the
+  // client displays them but never re-derives them, so the UI can't drift
+  // from what actually gets awarded.
+  const points = getOraclePointTiers(match.stage, ai_confidence);
+
+  return { match_id: matchId, algorithm: algorithmPred, ai: aiPred, ai_confidence, points };
 }
 
 function getTodayPredictions(userId) {
@@ -106,8 +98,13 @@ function getTodayPredictions(userId) {
   `).all(today);
 
   return matches.map(m => ({
-    match:      m,
+    // Lock state is attached server-side so the client never re-derives
+    // the "1 hour before kickoff" rule from its own constants.
+    match:      { ...m, ...getMatchLockInfo(m.match_date) },
     prediction: getOraclePrediction(m.id, userId),
+    // The user's existing bet rides along — without this the client had to
+    // fire one GET per match (N+1) just to know what was already picked.
+    bet:        getOracleBet(userId, m.id),
   }));
 }
 

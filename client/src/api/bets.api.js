@@ -1,5 +1,7 @@
 import apiClient from './client';
 
+export const getBettingConfig   = ()     => apiClient.get('/bets/config').then(r => r.data);
+
 export const submitGroupBet     = (data) => apiClient.post('/bets/group', data).then(r => r.data);
 export const getGroupBets       = ()     => apiClient.get('/bets/group').then(r => r.data);
 

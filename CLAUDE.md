@@ -62,9 +62,12 @@ Full-stack web app for tracking FIFA World Cup 2026: live standings, match sched
 - Top Scorer: 50 pts (player name + team both match)
 - Oracle multipliers on base 5: BOTH_AGREED 0.8x (4 pts) · WITH_WINNER 1.2x (6 pts) · DEFY_BOTH 2.0x (10 pts)
 
-**Locking:**
-- Group stage + Top Scorer: `2026-06-13T14:00:00Z` — set in `constants.js` AND mirrored in `GroupBetting.jsx` / `TopScorer.jsx`
-- Knockout: 1 hour before each match kickoff
+**Locking** — single source of truth in `server/src/utils/matchLock.js` (rules) + `constants.js` (values):
+- Group stage + Top Scorer: `2026-06-13T14:00:00Z`. The client reads lock state from `GET /api/bets/config` — no client-side mirror.
+- Knockout + Oracle: 1 hour before each match kickoff. Read endpoints attach `is_locked`/`lock_time` per match; write endpoints enforce via `assertMatchNotLocked`.
+- Oracle point tiers are computed server-side by `getOraclePointTiers` in `scoring.service.js` (used by both the scorer and the prediction endpoints) — the client only displays `prediction.points`.
+
+**Tests & lint** (in `server/`): `npm test` (Vitest, suites in `server/tests/`, throwaway SQLite per worker) · `npm run lint` (ESLint 9 flat config).
 
 **API status values:** football-data.org uses `TIMED` for upcoming matches (not `SCHEDULED`). Both `groqOracle.service.js` SQL and `MatchCard.jsx computeDisplayStatus` handle `TIMED`.
 

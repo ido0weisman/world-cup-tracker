@@ -4,7 +4,11 @@ const authGuard = require('../../middleware/auth.middleware');
 
 const router = Router();
 
-// All betting routes require a valid JWT — guests cannot place or view bets
+// Public: lock dates/state — needed by betting pages before login too,
+// so it's registered BEFORE the authGuard below.
+router.get('/config', betsController.getBettingConfig);
+
+// All other betting routes require a valid JWT — guests cannot place or view bets
 router.use(authGuard);
 
 router.post('/group',       betsController.submitGroupBet);
