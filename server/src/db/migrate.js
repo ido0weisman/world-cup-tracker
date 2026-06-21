@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { VALID_STANDINGS_GROUP_NAMES } = require('../config/constants');
 
 // Runs all CREATE TABLE IF NOT EXISTS statements inside a single transaction.
 // SQLite guarantees atomicity: either all tables are created or none are.
@@ -287,6 +288,28 @@ function runMigrations() {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_teams_external_id
     ON teams(external_id)
   `);
+
+  // V7 fix: purge group_standings rows already written with a malformed
+  // group_name (e.g. "Atlantic Division") before the whitelist in
+  // apiCache.service existed. The whitelist only stops *new* bad rows --
+  // it doesn't retroactively clean up ones already in the DB, so that's a
+  // one-time data fix here. Deleting (rather than relabeling) is safe: the
+  // affected team's correct group_standings row already exists or will be
+  // recreated by the next /standings sync, since teams keep their identity
+  // via external_id regardless of which group row got corrupted.
+  const validStandingsGroupNames = new Set(VALID_STANDINGS_GROUP_NAMES);
+  const allGroupNames = db.prepare('SELECT DISTINCT group_name FROM group_standings').all();
+  const invalidGroupNames = allGroupNames
+    .map(row => row.group_name)
+    .filter(name => !validStandingsGroupNames.has(name));
+
+  if (invalidGroupNames.length > 0) {
+    const deleteInvalidGroup = db.prepare('DELETE FROM group_standings WHERE group_name = ?');
+    for (const name of invalidGroupNames) {
+      const { changes } = deleteInvalidGroup.run(name);
+      console.log(`[DB] V7: purged ${changes} group_standings row(s) with invalid group_name "${name}".`);
+    }
+  }
 
   console.log('[DB] Migrations complete.');
 }

@@ -68,24 +68,26 @@ describe('upsertMatches - group_name whitelist', () => {
   });
 });
 
+// Shared across describe blocks that need a standings table entry --
+// hoisted to module scope rather than redefined per-block.
+const standingsEntry = (overrides = {}) => ({
+  team: { id: 9001 },
+  playedGames: 1,
+  won: 1,
+  draw: 0,
+  lost: 0,
+  goalsFor: 2,
+  goalsAgainst: 0,
+  points: 3,
+  position: 1,
+  ...overrides,
+});
+
 describe('upsertStandings - group_name whitelist', () => {
   // upsertStandings only resolves teams that already exist (teams are created
   // by upsertMatches), so seed one via the matches fixture first.
   beforeEach(() => {
     upsertMatches([buildMatchFixture({ id: 5, group: 'GROUP_E', homeTla: 'CUW', awayTla: 'OPP' })]);
-  });
-
-  const standingsEntry = (overrides = {}) => ({
-    team: { id: 9001 },
-    playedGames: 1,
-    won: 1,
-    draw: 0,
-    lost: 0,
-    goalsFor: 2,
-    goalsAgainst: 0,
-    points: 3,
-    position: 1,
-    ...overrides,
   });
 
   it('keeps a valid standings group name as-is', () => {
@@ -98,5 +100,39 @@ describe('upsertStandings - group_name whitelist', () => {
     upsertStandings([{ group: 'Atlantic Division', table: [standingsEntry()] }]);
     const row = db.prepare('SELECT group_name FROM group_standings WHERE team_id = (SELECT id FROM teams WHERE external_id = 9001)').get();
     expect(row.group_name).toBe('UNKNOWN');
+  });
+});
+
+// V7 covers data that got corrupted before the whitelist existed -- the
+// whitelist above only stops *new* bad writes, so this checks the migration
+// itself retroactively purges rows already sitting in the DB with a
+// malformed group_name (the exact shape of the live "Atlantic Division" bug).
+describe('runMigrations - V7 cleanup of pre-existing invalid group_standings rows', () => {
+  beforeEach(() => {
+    upsertMatches([buildMatchFixture({ id: 6, group: 'GROUP_E', homeTla: 'CUW', awayTla: 'OPP' })]);
+  });
+
+  it('deletes rows with a group_name outside the canonical whitelist', () => {
+    const teamId = db.prepare('SELECT id FROM teams WHERE external_id = 9001').get().id;
+    // Bypasses upsertStandings to simulate a row written before the
+    // whitelist existed, since upsertStandings itself would now reject this.
+    db.prepare(`
+      INSERT INTO group_standings (group_name, team_id, played, won, drawn, lost, goals_for, goals_against, points, position)
+      VALUES ('Atlantic Division', ?, 1, 1, 0, 0, 2, 0, 3, 1)
+    `).run(teamId);
+
+    runMigrations();
+
+    const row = db.prepare('SELECT * FROM group_standings WHERE group_name = ?').get('Atlantic Division');
+    expect(row).toBeUndefined();
+  });
+
+  it('leaves rows with a valid group_name untouched', () => {
+    upsertStandings([{ group: 'Group E', table: [standingsEntry()] }]);
+
+    runMigrations();
+
+    const row = db.prepare('SELECT group_name FROM group_standings WHERE team_id = (SELECT id FROM teams WHERE external_id = 9001)').get();
+    expect(row.group_name).toBe('Group E');
   });
 });
