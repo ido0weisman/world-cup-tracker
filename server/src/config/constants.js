@@ -44,4 +44,13 @@ const LOCK = {
   KNOCKOUT_UNLOCK_HOURS_AFTER: 1,
 };
 
-module.exports = { STAGE, MATCH_STATUS, SCORING, LOCK };
+const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+
+// football-data.org's two endpoints label the same 12 groups differently --
+// /matches uses 'GROUP_A' style, /standings uses 'Group A' style. Whitelisting
+// against these is what stops a malformed API response (seen live: "Atlantic
+// Division") from being written straight into the DB as if it were real.
+const VALID_MATCH_GROUP_NAMES = new Set(GROUP_LETTERS.map(letter => `GROUP_${letter}`));
+const VALID_STANDINGS_GROUP_NAMES = new Set(GROUP_LETTERS.map(letter => `Group ${letter}`));
+
+module.exports = { STAGE, MATCH_STATUS, SCORING, LOCK, VALID_MATCH_GROUP_NAMES, VALID_STANDINGS_GROUP_NAMES };

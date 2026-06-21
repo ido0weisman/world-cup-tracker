@@ -240,7 +240,120 @@ function runMigrations() {
     console.log('[DB] V5: rebuilt oracle_bets with corrected sided_with constraint.');
   }
 
+  // V6 fix: football-data.org can return a different tla for the same
+  // team across different match records in the same /matches payload
+  // (observed live: Curacao showed up as both 'CUW' and 'CUR'). teams was
+  // deduped on short_code, so a drifting tla silently created a second row
+  // for a team that already existed -- producing "5 teams" in a group of 4.
+  // A stable identity (the API's numeric team id) fixes this going forward;
+  // the steps below backfill that id and merge any rows already duplicated
+  // before this fix landed.
+  const teamCols = db.prepare('PRAGMA table_info(teams)').all().map(c => c.name);
+  if (!teamCols.includes('external_id')) {
+    db.exec('ALTER TABLE teams ADD COLUMN external_id INTEGER');
+  }
+
+  // Backfill external_id from whatever /matches payload is already cached --
+  // it carries the API's numeric team id alongside the short_code we already
+  // store, so we can map one to the other without an extra network call.
+  const cachedMatches = db.prepare(`SELECT payload FROM api_cache WHERE cache_key = 'matches'`).get();
+  if (cachedMatches) {
+    const tlaToExternalId = {};
+    for (const m of JSON.parse(cachedMatches.payload).matches) {
+      if (m.homeTeam?.tla) tlaToExternalId[m.homeTeam.tla] = m.homeTeam.id;
+      if (m.awayTeam?.tla) tlaToExternalId[m.awayTeam.tla] = m.awayTeam.id;
+    }
+
+    const backfillExternalId = db.prepare(
+      'UPDATE teams SET external_id = ? WHERE short_code = ? AND external_id IS NULL'
+    );
+    for (const [tla, externalId] of Object.entries(tlaToExternalId)) {
+      backfillExternalId.run(externalId, tla);
+    }
+  }
+
+  // Merge teams that ended up duplicated before external_id existed -- first
+  // by the newly-backfilled external_id (most reliable, this is what catches
+  // the Curacao-style case), then by name as a fallback for any row the
+  // backfill above couldn't match to a cached payload.
+  mergeDuplicateTeams(db, 'external_id');
+  mergeDuplicateTeams(db, 'name');
+
+  // A plain (non-partial) unique index: SQLite already treats NULLs as
+  // distinct from one another under UNIQUE, so teams without a value yet
+  // don't collide -- and a plain index, unlike a partial one, can be used
+  // directly as an ON CONFLICT target by the upsert in apiCache.service.
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_teams_external_id
+    ON teams(external_id)
+  `);
+
   console.log('[DB] Migrations complete.');
+}
+
+// Collapses duplicate team rows (same identity, different primary key) into
+// the lowest id, re-pointing every foreign key that references the
+// duplicates before deleting them. group_standings has a UNIQUE(group_name,
+// team_id) constraint, so a straight UPDATE can collide with a row the
+// survivor already owns -- in that case the loser's row is dropped instead
+// of updated.
+function mergeDuplicateTeams(db, identityColumn) {
+  const duplicateGroups = db.prepare(`
+    SELECT ${identityColumn} AS identity, GROUP_CONCAT(id) AS ids
+    FROM teams
+    WHERE ${identityColumn} IS NOT NULL
+    GROUP BY ${identityColumn}
+    HAVING COUNT(*) > 1
+  `).all();
+
+  if (duplicateGroups.length === 0) return;
+
+  const survivorHasStanding = db.prepare(
+    'SELECT 1 FROM group_standings WHERE group_name = ? AND team_id = ?'
+  );
+  const deleteLoserStanding = db.prepare(
+    'DELETE FROM group_standings WHERE group_name = ? AND team_id = ?'
+  );
+  const repointStanding = db.prepare(
+    'UPDATE group_standings SET team_id = ? WHERE group_name = ? AND team_id = ?'
+  );
+  const loserStandings = db.prepare(
+    'SELECT group_name FROM group_standings WHERE team_id = ?'
+  );
+
+  db.exec('BEGIN');
+  try {
+    for (const { ids } of duplicateGroups) {
+      const [survivorId, ...loserIds] = ids.split(',').map(Number).sort((a, b) => a - b);
+
+      for (const loserId of loserIds) {
+        for (const { group_name } of loserStandings.all(loserId)) {
+          if (survivorHasStanding.get(group_name, survivorId)) {
+            deleteLoserStanding.run(group_name, loserId);
+          } else {
+            repointStanding.run(survivorId, group_name, loserId);
+          }
+        }
+
+        db.prepare('UPDATE matches SET home_team_id = ? WHERE home_team_id = ?').run(survivorId, loserId);
+        db.prepare('UPDATE matches SET away_team_id = ? WHERE away_team_id = ?').run(survivorId, loserId);
+        db.prepare('UPDATE matches SET winner_team_id = ? WHERE winner_team_id = ?').run(survivorId, loserId);
+        db.prepare('UPDATE predictions_group SET team1_id = ? WHERE team1_id = ?').run(survivorId, loserId);
+        db.prepare('UPDATE predictions_group SET team2_id = ? WHERE team2_id = ?').run(survivorId, loserId);
+        db.prepare('UPDATE predictions_knockout SET predicted_winner_id = ? WHERE predicted_winner_id = ?').run(survivorId, loserId);
+        db.prepare('UPDATE predictions_top_scorer SET team_id = ? WHERE team_id = ?').run(survivorId, loserId);
+        db.prepare('UPDATE oracle_bets SET picked_winner_id = ? WHERE picked_winner_id = ?').run(survivorId, loserId);
+
+        db.prepare('DELETE FROM teams WHERE id = ?').run(loserId);
+      }
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+
+  console.log(`[DB] V6: merged ${duplicateGroups.length} duplicate team group(s) by ${identityColumn}.`);
 }
 
 module.exports = runMigrations;

@@ -2,6 +2,7 @@ const axios = require('axios');
 const cron = require('node-cron');
 const db = require('../config/db');
 const { scoreKnockoutPredictions, scoreOracleBets } = require('./scoring.service');
+const { VALID_MATCH_GROUP_NAMES, VALID_STANDINGS_GROUP_NAMES } = require('../config/constants');
 
 const API_BASE = process.env.FOOTBALL_API_BASE_URL;
 const API_KEY = process.env.FOOTBALL_API_KEY;
@@ -25,6 +26,18 @@ const TEAM_NAME_OVERRIDES = {
 
 function shortenTeamName(name) {
   return TEAM_NAME_OVERRIDES[name] || name;
+}
+
+// football-data.org's documented `group` enum is GROUP_A..GROUP_L (matches)
+// or Group A..Group L (standings) -- nothing else. Without this check, a
+// malformed value in a single API response gets written straight into the
+// DB and rendered as a real group (this is how "Atlantic Division" happened).
+// Falling back to a sentinel instead of throwing keeps the 20-min cron
+// resilient to one bad payload, while the warning makes the anomaly visible.
+function assertValidGroupName(rawGroupName, validNames, context) {
+  if (validNames.has(rawGroupName)) return rawGroupName;
+  console.warn(`[Cache] Rejected unrecognized group name "${rawGroupName}" from ${context}; using UNKNOWN.`);
+  return 'UNKNOWN';
 }
 
 async function fetchAndCacheMatches() {
@@ -91,11 +104,18 @@ function runInTransaction(fn) {
 }
 
 function upsertMatches(matches) {
+  // Keyed on external_id (the API's numeric team id) rather than short_code --
+  // football-data.org has been observed returning a different tla for the
+  // same team across different match records (e.g. Curacao as both 'CUW'
+  // and 'CUR'), which under a short_code key created a second row for a
+  // team that already existed. external_id doesn't drift, so short_code is
+  // now just a display column that gets overwritten on conflict like name.
   const upsertTeam = db.prepare(`
-    INSERT INTO teams (name, short_code, flag_url, group_name)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(short_code) DO UPDATE SET
+    INSERT INTO teams (name, short_code, flag_url, group_name, external_id)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(external_id) DO UPDATE SET
       name       = excluded.name,
+      short_code = excluded.short_code,
       flag_url   = excluded.flag_url,
       group_name = excluded.group_name
   `);
@@ -113,19 +133,25 @@ function upsertMatches(matches) {
       updated_at     = CURRENT_TIMESTAMP
   `);
 
-  const getTeamId = db.prepare(`SELECT id FROM teams WHERE short_code = ?`);
+  const getTeamId = db.prepare(`SELECT id FROM teams WHERE external_id = ?`);
 
   runInTransaction(() => {
     for (const m of matches) {
-      if (m.homeTeam?.tla) {
-        upsertTeam.run(shortenTeamName(m.homeTeam.name), m.homeTeam.tla, m.homeTeam.crest || null, m.group || 'KNOCKOUT');
+      // Knockout matches carry no group at all -- only validate when the API
+      // actually claims one, otherwise this would warn on every knockout match.
+      const groupName = m.group ? assertValidGroupName(m.group, VALID_MATCH_GROUP_NAMES, '/matches') : 'KNOCKOUT';
+
+      // Both id and tla are required: id is the stable identity we key on,
+      // tla is still needed for the short_code display column (NOT NULL).
+      if (m.homeTeam?.id && m.homeTeam?.tla) {
+        upsertTeam.run(shortenTeamName(m.homeTeam.name), m.homeTeam.tla, m.homeTeam.crest || null, groupName, m.homeTeam.id);
       }
-      if (m.awayTeam?.tla) {
-        upsertTeam.run(shortenTeamName(m.awayTeam.name), m.awayTeam.tla, m.awayTeam.crest || null, m.group || 'KNOCKOUT');
+      if (m.awayTeam?.id && m.awayTeam?.tla) {
+        upsertTeam.run(shortenTeamName(m.awayTeam.name), m.awayTeam.tla, m.awayTeam.crest || null, groupName, m.awayTeam.id);
       }
 
-      const homeId = m.homeTeam?.tla ? getTeamId.get(m.homeTeam.tla)?.id : null;
-      const awayId = m.awayTeam?.tla ? getTeamId.get(m.awayTeam.tla)?.id : null;
+      const homeId = m.homeTeam?.id ? getTeamId.get(m.homeTeam.id)?.id : null;
+      const awayId = m.awayTeam?.id ? getTeamId.get(m.awayTeam.id)?.id : null;
 
       // Determine the knockout winner from the API's score.winner field.
       // "HOME_TEAM" / "AWAY_TEAM" covers normal time, extra time, and penalties.
@@ -168,13 +194,15 @@ function upsertStandings(standings) {
       updated_at    = CURRENT_TIMESTAMP
   `);
 
-  const getTeamId = db.prepare(`SELECT id FROM teams WHERE short_code = ?`);
+  // Keyed on external_id, same reasoning as upsertMatches -- the standings
+  // payload's team.tla isn't guaranteed to match the tla seen in /matches.
+  const getTeamId = db.prepare(`SELECT id FROM teams WHERE external_id = ?`);
 
   runInTransaction(() => {
     for (const group of standings) {
-      const groupName = group.group;
+      const groupName = assertValidGroupName(group.group, VALID_STANDINGS_GROUP_NAMES, '/standings');
       for (const entry of group.table) {
-        const teamId = getTeamId.get(entry.team.tla)?.id;
+        const teamId = getTeamId.get(entry.team.id)?.id;
         if (!teamId) continue;
         upsert.run(
           groupName,
@@ -219,4 +247,7 @@ async function initCacheService() {
   console.log('[Cache] Scheduler started. Refreshing every 20 minutes.');
 }
 
-module.exports = { initCacheService };
+// upsertMatches/upsertStandings are exported alongside the public
+// initCacheService so tests can exercise the sync logic directly with
+// fixture payloads, without making a real network call.
+module.exports = { initCacheService, upsertMatches, upsertStandings };
