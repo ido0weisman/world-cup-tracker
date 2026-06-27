@@ -39,9 +39,12 @@ const SCORING = {
 const LOCK = {
   // Group stage and top scorer lock -- June 13, 2026 at 14:00 UTC
   GROUP_STAGE_LOCK_DATE: '2026-06-13T14:00:00Z',
+  // Global knockout-stage gate -- predictions stay closed even on matches whose
+  // bracket slots are already known, until 1 hour after the last group-stage
+  // game (June 27, 2026, 8:00 PM CT / 01:00 UTC June 28).
+  KNOCKOUT_OPEN_DATE: '2026-06-28T01:00:00Z',
   // Hours before a knockout match starts that predictions are locked
   KNOCKOUT_LOCK_HOURS_BEFORE: 1,
-  KNOCKOUT_UNLOCK_HOURS_AFTER: 1,
 };
 
 const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];

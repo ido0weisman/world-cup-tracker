@@ -23,8 +23,11 @@ function KnockoutMatchCard({ match, existingBet, preview, onSave }) {
 
   // A pick only makes sense once both bracket slots are filled — until then
   // there's no team to select, so the card stays locked regardless of timing.
-  // is_locked is computed by the server (single source of the lock rule).
+  // is_locked is computed by the server (single source of the lock rule) and
+  // also covers the global knockout-stage gate (opens_at) — a matchup being
+  // known doesn't mean the stage has opened for predictions yet.
   const matchupKnown = Boolean(home && away);
+  const stageNotYetOpen = matchupKnown && match.is_locked && new Date() < new Date(match.opens_at) && match.status !== 'FINISHED';
   const locked = !matchupKnown || match.is_locked || match.status === 'FINISHED';
 
   async function handlePick(teamId) {
@@ -102,6 +105,13 @@ function KnockoutMatchCard({ match, existingBet, preview, onSave }) {
       {!matchupKnown && (
         <p className="ko-bet-card__locked">🔒 Picks unlock once this matchup is confirmed</p>
       )}
+      {stageNotYetOpen && (
+        <p className="ko-bet-card__locked">
+          🔒 Picks open {new Date(match.opens_at).toLocaleString(MATCH_LOCALE, {
+            month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+          })}
+        </p>
+      )}
     </div>
   );
 }
@@ -127,7 +137,7 @@ function KnockoutBetting() {
       <button className="betting-back" onClick={() => navigate('/betting')}>← Back</button>
       <h1 className="betting-page__title">🥊 Knockout Predictions</h1>
       <p className="betting-page__sub">
-        Pick the winner of each match. Each match locks 1 hour before kickoff.
+        Pick the winner of each match. Predictions open once the group stage ends, and each match locks 1 hour before kickoff.
       </p>
 
       {!hasMatches && (

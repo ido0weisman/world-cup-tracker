@@ -6,24 +6,30 @@ const createError = require('./createError');
 // their responses so the client can DISPLAY lock state without re-deriving
 // it from its own copy of the rules.
 
-// Per-match lock: closes a fixed number of hours before kickoff.
+// Per-match lock: closes a fixed number of hours before kickoff. Also gated by
+// a global knockout-stage open date -- a bracket slot being filled in doesn't
+// mean predictions are open yet; the whole stage stays closed until
+// KNOCKOUT_OPEN_DATE regardless of how early a matchup becomes known.
 function getMatchLockInfo(matchDate) {
+  const opensAt = new Date(LOCK.KNOCKOUT_OPEN_DATE);
   const lockTime = new Date(
     new Date(matchDate).getTime() - LOCK.KNOCKOUT_LOCK_HOURS_BEFORE * 60 * 60 * 1000
   );
+  const now = new Date();
   return {
+    opens_at:  opensAt.toISOString(),
     lock_time: lockTime.toISOString(),
-    is_locked: new Date() >= lockTime,
+    is_locked: now < opensAt || now >= lockTime,
   };
 }
 
 function assertMatchNotLocked(match, message) {
-  if (getMatchLockInfo(match.match_date).is_locked) {
-    throw createError(
-      message ??
-        `Predictions for this match are closed (locks ${LOCK.KNOCKOUT_LOCK_HOURS_BEFORE}h before kickoff).`,
-      423
-    );
+  const lockInfo = getMatchLockInfo(match.match_date);
+  if (lockInfo.is_locked) {
+    const reason = new Date() < new Date(LOCK.KNOCKOUT_OPEN_DATE)
+      ? `Knockout predictions open ${lockInfo.opens_at}.`
+      : `Predictions for this match are closed (locks ${LOCK.KNOCKOUT_LOCK_HOURS_BEFORE}h before kickoff).`;
+    throw createError(message ?? reason, 423);
   }
 }
 
