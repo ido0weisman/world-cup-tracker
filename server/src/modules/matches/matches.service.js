@@ -14,11 +14,13 @@ function formatMatch(row) {
     home_score:  row.home_score,
     away_score:  row.away_score,
     home_team: {
+      id:         row.home_team_id,
       name:       row.home_team_name,
       short_code: row.home_team_code,
       flag_url:   row.home_team_flag,
     },
     away_team: {
+      id:         row.away_team_id,
       name:       row.away_team_name,
       short_code: row.away_team_code,
       flag_url:   row.away_team_flag,

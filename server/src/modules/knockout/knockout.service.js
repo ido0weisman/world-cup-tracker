@@ -18,11 +18,13 @@ function formatMatch(row) {
     // null (not an empty-but-truthy object) so the frontend can render a
     // proper "TBD" / "not yet determined" state instead of a blank card.
     home_team: row.home_team_id ? {
+      id:         row.home_team_id,
       name:       row.home_team_name,
       short_code: row.home_team_code,
       flag_url:   row.home_team_flag,
     } : null,
     away_team: row.away_team_id ? {
+      id:         row.away_team_id,
       name:       row.away_team_name,
       short_code: row.away_team_code,
       flag_url:   row.away_team_flag,
