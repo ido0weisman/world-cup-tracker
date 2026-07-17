@@ -1,12 +1,14 @@
 # ⚽ World Cup 2026 Tracker & Predictions App
 
-A full-stack web application for tracking the FIFA World Cup 2026 — live standings, match schedules, and a predictions game for registered users.
+A full-stack web application for tracking the FIFA World Cup 2026 - live standings, match schedules, and a predictions game for registered users.
 
 ---
 
 ## 🔴 Live Demo
 **Live Demo ended**
+
 The 2026 World Cup is over! See you at the 2030 World Cup!
+
 follow **Run It Locally** below to run the full app on your own machine.
 
 ---
